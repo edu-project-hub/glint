@@ -1,13 +1,14 @@
 import os
 import sys
 import subprocess
+from typing import Tuple
 
 
-def get_sokol_backend():
+def get_sokol_backend() -> Tuple[str, str]:
     print(
         "No MacOS and Windows support yet. @Robaertschi probably adds MacOS support and @Fabbboy adds Windows support."
     )
-    return "SOKOL_GLCORE"
+    return "SOKOL_GLCORE", "gl"
 
 def get_c_compiler():
     compiler = os.environ.get("CC")
@@ -17,13 +18,14 @@ def get_c_compiler():
     return "gcc"
 
 C_COMPILER = get_c_compiler()
+BACKEND = get_sokol_backend()
 
 def build_static_lib(build_type, src, dst, backend_macro, root_path):
     sokol_dir = os.path.join(root_path, "vendor", "sokol-odin", "sokol")
     c_dir = os.path.join(sokol_dir, "c")
     src_c_file = os.path.join(c_dir, f"{src}.c")
     dst_a_file = os.path.join(sokol_dir, f"{dst}.a")
-    obj_file = f"{src}.o"
+    obj_file = os.path.join(sokol_dir, f"{src}.o")
 
     if not os.path.isfile(src_c_file):
         print(f"Source file not found: {src_c_file}")
@@ -74,7 +76,7 @@ def build_static_lib(build_type, src, dst, backend_macro, root_path):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python build_sokol.py /absolute/path/to/project_root")
+        print(f"Usage: python3 {sys.argv[0]} /absolute/path/to/project_root")
         sys.exit(1)
 
     root = sys.argv[1]
@@ -82,9 +84,8 @@ def main():
         print("Error: Please provide an absolute path.")
         sys.exit(1)
 
-    backend = get_sokol_backend()
     modules = [
-        ("sokol_gfx", "gfx/sokol_gfx_linux_x64_gl", backend),
+        ("sokol_gfx", f"gfx/sokol_gfx_linux_x64_{BACKEND[1]}", BACKEND[0]),
         # insert all libs as we need them
     ]
 
