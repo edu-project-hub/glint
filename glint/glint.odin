@@ -34,7 +34,7 @@ main :: proc() {
   })
   defer sg.destroy_buffer(vbuf)
 
-  shd := sg.make_shader(shaders.triangle_shader_desc(.GLCORE))
+  shd := sg.make_shader(shaders.triangle_shader_desc(sg.query_backend()))
   defer sg.destroy_shader(shd)
 
   pip := sg.make_pipeline({
