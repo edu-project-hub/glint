@@ -2,3 +2,4 @@ bin/
 .idea
 *.so
 *.a
+.direnv
