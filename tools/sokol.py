@@ -26,7 +26,6 @@ def build_static_lib(build_type, src, dst, backend_macro, root_path):
     src_c_file = os.path.join(c_dir, f"{src}.c")
     dst_a_file = os.path.join(sokol_dir, f"{dst}.a")
     obj_file = os.path.join(sokol_dir, f"{src}.o")
-
     if not os.path.isfile(src_c_file):
         print(f"Source file not found: {src_c_file}")
         return
