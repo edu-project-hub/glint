@@ -1,5 +1,5 @@
 ODIN ?= $(shell which odin)
-ODIN_FLAGS := -show-timings -o:none -debug
+ODIN_FLAGS := -show-timings -o:speed -debug
 
 WORKDIR := $(shell pwd)
 ODIN_DIR := $(WORKDIR)/glint
@@ -14,13 +14,14 @@ ODIN_FLAGS += -out:$(TARGET) -collection:sokol=vendor/sokol-odin/sokol
 all: prepare $(TARGET)
 
 $(TARGET): $(ODIN_DIR) $(SOKOL)
-	@cd $(SOKOL) && sh build_clibs_linux.sh
+	@$(MAKE) -f sokol.mk WORKDIR=$(WORKDIR)
 	$(ODIN) build $(ODIN_DIR) $(ODIN_FLAGS)
 
 prepare:
 	@mkdir -p $(BIN_DIR)
 
 clean:
+	@$(MAKE) -f sokol.mk clean WORKDIR=$(WORKDIR)
 	rm -rf $(BIN_DIR)
 
 run: prepare $(TARGET)
