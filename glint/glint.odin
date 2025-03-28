@@ -1,7 +1,7 @@
-package main 
+package main
 
 import "core:fmt"
 
-main :: proc(){
-    fmt.println("Hello, Glint!")
+main :: proc() {
+	fmt.println("Hello, Glint!")
 }
