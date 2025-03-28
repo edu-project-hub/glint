@@ -19,9 +19,9 @@ Newlines are ignored by default:
 )
 
 (component 
-    ("test")    #( This is a parameter, a parameter is in like a block in () but it starts with an value and not a identifier
-                Also this declares a component with the name "test", a component contains blocks that will be inserted where it is called, a component can be passed
-                Parameters, more about these later
+    ("test")    #( This is a parameter, a parameter is defined within parentheses and begins with a value instead of an identifier.
+                Also, this declares a component with the name "test". A component contains blocks that will be inserted where it is called, and a component can be passed
+                parameters. More about these later.
                 )#
     This is an example component
 )
