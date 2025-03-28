@@ -41,8 +41,8 @@ def prepend_to_file(file_path, string_to_add, chunk_size=1024):
 
 def generate_shader(shader: pathlib.Path, backend: str):
     output = GENERATED_SHADERS_DIR / (shader.name + ".odin")
-    subprocess.run([SOKOL_SHDC, "--input", shader,
-                   "--output", output, "--slang", backend, "-f", "sokol_odin"],
+    subprocess.run([str(SOKOL_SHDC), "--input", str(shader),
+                   "--output", str(output), "--slang", backend, "-f", "sokol_odin"],
                    check=True
                    )
     prepend_to_file(output, "package shaders\nimport sg \"sokol:gfx\"\n")
