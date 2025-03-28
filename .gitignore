@@ -3,3 +3,4 @@ bin/
 *.so
 *.a
 .direnv
+__pycache__
