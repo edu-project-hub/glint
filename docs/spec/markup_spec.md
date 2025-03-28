@@ -7,7 +7,7 @@ The markup language is inspired by Lisp like languages:
 )
 
 (p # Paragraph
-Enters are ignored by default:
+Newlines are ignored by default:
 )
 
 (p
