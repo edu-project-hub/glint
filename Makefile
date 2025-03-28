@@ -19,6 +19,7 @@ prepare:
 	@mkdir -p $(BIN_DIR)
 
 clean:
-	rm -r $(BIN_DIR)
+	rm -rf $(BIN_DIR)
 	
-run: $(TARGET)
+run: prepare $(TARGET)
+	@$(TARGET) $(ARGS)
