@@ -16,6 +16,7 @@ pkgs.mkShell {
     pkgs.xorg.libXi
     pkgs.xorg.libXinerama
     pkgs.xorg.libXrandr
+    pkgs.glfw
   ];
     shellHook = ''
         export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH
