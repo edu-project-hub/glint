@@ -1,11 +1,12 @@
 ODIN ?= $(shell which odin)
-ODIN_FLAGS := -show-timings -o:speed -debug
+PYTHON ?= $(shell which python3)
+ODIN_FLAGS := -show-timings -o:none -debug
 
-WORKDIR := $(shell pwd)
+WORKDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ODIN_DIR := $(WORKDIR)/glint
 BIN_DIR := $(WORKDIR)/bin
 TARGET := $(BIN_DIR)/glint
-SOKOL := $(WORKDIR)/vendor/sokol-odin/sokol
+TOOLS_DIR := $(WORKDIR)/tools
 
 ODIN_FLAGS += -out:$(TARGET) -collection:sokol=vendor/sokol-odin/sokol
 
@@ -14,7 +15,7 @@ ODIN_FLAGS += -out:$(TARGET) -collection:sokol=vendor/sokol-odin/sokol
 all: prepare $(TARGET)
 
 $(TARGET): $(ODIN_DIR) $(SOKOL)
-	@$(MAKE) -f sokol.mk WORKDIR=$(WORKDIR)
+	$(PYTHON) $(TOOLS_DIR)/sokol.py $(WORKDIR)
 	$(ODIN) build $(ODIN_DIR) $(ODIN_FLAGS)
 
 prepare:
