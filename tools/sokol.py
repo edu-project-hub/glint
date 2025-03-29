@@ -10,6 +10,7 @@ def get_sokol_backend() -> Tuple[str, str]:
     )
     return "SOKOL_GLCORE", "gl"
 
+
 def get_c_compiler():
     compiler = os.environ.get("CC")
     if compiler:
@@ -17,8 +18,10 @@ def get_c_compiler():
 
     return "gcc"
 
+
 C_COMPILER = get_c_compiler()
 BACKEND = get_sokol_backend()
+
 
 def build_static_lib(build_type, src, dst, backend_macro, root_path):
     sokol_dir = os.path.join(root_path, "vendor", "sokol-odin", "sokol")

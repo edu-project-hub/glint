@@ -16,13 +16,13 @@ all: prepare $(TARGET)
 
 $(TARGET): $(ODIN_DIR) $(SOKOL)
 	$(PYTHON) $(TOOLS_DIR)/sokol.py $(WORKDIR)
+	$(PYTHON) $(TOOLS_DIR)/generate_shaders.py $(WORKDIR)
 	$(ODIN) build $(ODIN_DIR) $(ODIN_FLAGS)
 
 prepare:
 	@mkdir -p $(BIN_DIR)
 
 clean:
-	@$(MAKE) -f sokol.mk clean WORKDIR=$(WORKDIR)
 	rm -rf $(BIN_DIR)
 
 run: prepare $(TARGET)

@@ -4,6 +4,7 @@ import "core:fmt"
 import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"
+import "shaders"
 
 main :: proc() {
   glfw_init({
@@ -33,36 +34,15 @@ main :: proc() {
   })
   defer sg.destroy_buffer(vbuf)
 
-  shd := sg.make_shader({
-    vertex_func = {
-      source = `
-      #version 410
-      layout(location=0) in vec4 position;
-      layout(location=1) in vec4 color0;
-      out vec4 color;
-      void main() {
-        gl_Position = position;
-        color = color0;
-      }
-      `
-    },
-    fragment_func = { source = `
-      #version 410
-      in vec4 color;
-      out vec4 frag_color;
-      void main() {
-        frag_color = color;
-      }
-    ` }
-  })
+  shd := sg.make_shader(shaders.triangle_shader_desc(sg.query_backend()))
   defer sg.destroy_shader(shd)
 
   pip := sg.make_pipeline({
     shader = shd,
     layout = {
       attrs = {
-        0 = {format = .FLOAT3},
-        1 = {format = .FLOAT4},
+        shaders.ATTR_triangle_position = {format = .FLOAT3},
+        shaders.ATTR_triangle_color0 = {format = .FLOAT4},
       },
     },
   })
