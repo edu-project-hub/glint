@@ -181,7 +181,7 @@ is_whitespace :: proc(ch: rune) -> bool {
 }
 
 is_reserved :: proc(ch: rune) -> bool {
-  return ch == '(' || ch == ')'
+  return ch == '(' || ch == ')' || ch == '#'
 }
 
 read_identifier :: proc(l: ^Lexer, loc: Loc) -> Token {
@@ -211,7 +211,7 @@ read_identifier :: proc(l: ^Lexer, loc: Loc) -> Token {
       if escape {
         escape = false
         switch l.ch {
-        case ')', '(', '\\':
+        case ')', '(', '\\', '#':
           strings.write_rune(&b, l.ch)
           next_ch(l)
           continue
@@ -248,6 +248,22 @@ next_token :: proc(l: ^Lexer) -> Token {
 		type = .OpenParen
 	case ')':
 		type = .CloseParen
+  case '#':
+    if peek_byte(l) == '(' {
+      next_ch(l)
+      next_ch(l)
+
+      for !(l.ch == ')' && peek_byte(l) == '#') && l.ch != -1 {
+        next_ch(l)
+      }
+      next_ch(l)
+      next_ch(l)
+    } else {
+      for l.ch != '\n' && l.ch != -1 {
+        next_ch(l)
+      }
+    }
+    return next_token(l)
 	case:
 		return read_identifier(l, loc)
 	}
@@ -414,4 +430,16 @@ basic_escape :: proc(t: ^testing.T) {
     {type = .Runes, loc = {line = 1, column = 1}, data = "\\"},
     {type = .Runes, loc = {line = 1, column = 4}, data = "()"},
   }, tokens[:])
+}
+
+@(test)
+correct_comment_handling :: proc(t: ^testing.T) {
+  input := `
+  # Hello World
+  #(hi)#
+  hi
+  `
+  _, tokens := test_make_lexer(t, input)
+  defer test_delete_tokens(tokens)
+  test_expect_tokens(t, []Token{{type = .Identifier, loc = {line = 4, column = 3}, data = "hi"}}, tokens[:])
 }
