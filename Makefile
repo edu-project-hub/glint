@@ -10,13 +10,12 @@ TOOLS_DIR := $(WORKDIR)/tools
 
 ODIN_FLAGS += -out:$(TARGET) -collection:sokol=vendor/sokol-odin/sokol
 
-.PHONY: all clean run prepare $(TARGET) 
+.PHONY: all clean run prepare $(TARGET) generate_shaders
 
 all: prepare $(TARGET)
 
 $(TARGET): $(ODIN_DIR) $(SOKOL)
 	$(PYTHON) $(TOOLS_DIR)/sokol.py $(WORKDIR)
-	$(PYTHON) $(TOOLS_DIR)/generate_shaders.py $(WORKDIR)
 	$(ODIN) build $(ODIN_DIR) $(ODIN_FLAGS)
 
 prepare:
@@ -27,3 +26,6 @@ clean:
 
 run: prepare $(TARGET)
 	@$(TARGET) $(ARGS)
+
+generate_shaders:
+	$(PYTHON) $(TOOLS_DIR)/generate_shaders.py $(WORKDIR)
