@@ -58,8 +58,7 @@ def generate_shader(shader: pathlib.Path, backend: str):
 
 def main():
     if not GENERATED_SHADERS_DIR.exists():
-        GENERATED_SHADERS_DIR.mkdir()
-
+        GENERATED_SHADERS_DIR.mkdir(parents=True, exist_ok=True)
     for shader in get_shader_files():
         generate_shader(shader=shader, backend=BACKEND)
 
