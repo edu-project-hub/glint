@@ -55,10 +55,17 @@ Token_Type :: enum {
 Token :: struct {
 	type: Token_Type,
 	loc:  Loc,
-	data: union {
-		// Identifier, Characters
-		string,
-	},
+	// Identifier, Characters,
+	data: Maybe(string),
+}
+
+token_clone :: proc(t: Token) -> Token {
+  data : Maybe(string) = strings.clone(t.data.(string)) if t.data != nil else nil
+  return {
+    type = t.type,
+    loc = t.loc,
+    data = data,
+  }
 }
 
 Loc :: struct {
@@ -67,61 +74,57 @@ Loc :: struct {
 	column: int,
 }
 
-Error_Callback :: #type proc(loc: Loc, fmt: string, args: ..any)
+Lexer_Error_Callback :: #type proc(loc: Loc, fmt: string, args: ..any)
 
 Lexer :: struct {
 	// Immutable
-	input:            string,
-	file:             string,
-	error_callback:   Error_Callback,
+	input:          string,
+	file:           string,
+	error_callback: Lexer_Error_Callback,
 
 	// State
-	ch:               rune,
-	pos:              int,
-	peek_pos:         int,
-	last_line_pos:    int,
-	line:             int,
+	ch:             rune,
+	pos:            int,
+	peek_pos:       int,
+	last_line_pos:  int,
+	line:           int,
 
 	// Mutable
-	errors:           int,
-	insert_semicolon: bool,
+	errors:         int,
 }
 
-default_error_callback :: proc(loc: Loc, format: string, args: ..any) {
+lexer_default_error_callback :: proc(loc: Loc, format: string, args: ..any) {
 	fmt.eprintf("%s(%d:%d) ", loc.file, loc.line, loc.column)
 	fmt.eprintf(format, ..args)
 	fmt.eprintf("\n")
 }
 
-init :: proc(
-	l: ^Lexer,
-	input: string,
-	file: string,
-	error_callback: Error_Callback = default_error_callback,
-) {
-	l.input = input
-	l.file = file
-	l.error_callback = error_callback
+lexer_create :: proc(input: string, file: string, error_callback := lexer_default_error_callback) -> Lexer {
+  l := Lexer{
+    input = input,
+    file = file,
+    error_callback = error_callback,
+    pos = 0,
+    peek_pos = 0,
+    line = 1 if len(input) > 0 else 0,
+    last_line_pos = 0,
+    errors = 0,
+  }
 
-	l.ch = ' '
-	l.pos = 0
-	l.peek_pos = 0
-	l.line = len(input) > 0 ? 1 : 0
-	l.last_line_pos = 0
-	l.errors = 0
-	l.insert_semicolon = false
-
-	next_ch(l)
+	next_ch(&l)
 	if l.ch == utf8.RUNE_BOM {
-		next_ch(l)
+		next_ch(&l)
 	}
+
+  return l
 }
 
-@(private)
+@(private = "file")
 pos_to_loc :: proc(l: ^Lexer, pos: int) -> Loc {
 	return Loc{file = l.file, line = l.line, column = pos - l.last_line_pos + 1}
 }
 
+@(private = "file")
 error :: proc(l: ^Lexer, pos: int, format: string, args: ..any) {
 	loc := pos_to_loc(l, pos)
 	if l.error_callback != nil {
@@ -130,6 +133,7 @@ error :: proc(l: ^Lexer, pos: int, format: string, args: ..any) {
 	l.errors += 1
 }
 
+@(private = "file")
 next_ch :: proc(l: ^Lexer) {
 	if l.peek_pos < len(l.input) {
 		l.pos = l.peek_pos
@@ -161,6 +165,7 @@ next_ch :: proc(l: ^Lexer) {
 	}
 }
 
+@(private = "file")
 peek_byte :: proc(l: ^Lexer) -> byte {
 	if l.peek_pos < len(l.input) {
 		return l.input[l.peek_pos]
@@ -181,45 +186,46 @@ is_whitespace :: proc(ch: rune) -> bool {
 }
 
 is_reserved :: proc(ch: rune) -> bool {
-  return ch == '(' || ch == ')' || ch == '#'
+	return ch == '(' || ch == ')' || ch == '#'
 }
 
+@(private = "file")
 read_identifier :: proc(l: ^Lexer, loc: Loc) -> Token {
 	start_pos := l.pos
-  b : strings.Builder
-  strings.builder_init(&b)
+	b: strings.Builder
+	strings.builder_init(&b)
 
 	type := Token_Type.Identifier
 	for is_identifier_ch(l.ch) && l.ch != -1 {
-    strings.write_rune(&b, l.ch)
+		strings.write_rune(&b, l.ch)
 		next_ch(l)
 	}
 
 	if !is_whitespace(l.ch) && l.ch != -1 && !is_reserved(l.ch) {
-    escape := false
+		escape := false
 		type = .Runes
 		for !is_whitespace(l.ch) && l.ch != -1 {
-      if !escape && l.ch == ')' {
-        break
-      }
-      if l.ch == '\\' && !escape {
-        escape = true
-        next_ch(l)
-        continue
-      }
+			if !escape && l.ch == ')' {
+				break
+			}
+			if l.ch == '\\' && !escape {
+				escape = true
+				next_ch(l)
+				continue
+			}
 
-      if escape {
-        escape = false
-        switch l.ch {
-        case ')', '(', '\\', '#':
-          strings.write_rune(&b, l.ch)
-          next_ch(l)
-          continue
-        case:
-          error(l, l.pos, "invalid escape character '%r'", l.ch)
-        }
-      }
-      strings.write_rune(&b, l.ch)
+			if escape {
+				escape = false
+				switch l.ch {
+				case ')', '(', '\\', '#':
+					strings.write_rune(&b, l.ch)
+					next_ch(l)
+					continue
+				case:
+					error(l, l.pos, "invalid escape character '%r'", l.ch)
+				}
+			}
+			strings.write_rune(&b, l.ch)
 			next_ch(l)
 		}
 	}
@@ -232,11 +238,12 @@ read_identifier :: proc(l: ^Lexer, loc: Loc) -> Token {
 	return Token{type = type, loc = loc, data = strings.to_string(b)}
 }
 
+@(private = "file")
 skip_whitespace :: proc(l: ^Lexer) {
 	for is_whitespace(l.ch) {next_ch(l)}
 }
 
-next_token :: proc(l: ^Lexer) -> Token {
+lexer_next_token :: proc(l: ^Lexer) -> Token {
 	skip_whitespace(l)
 	type := Token_Type.Invalid
 	loc := pos_to_loc(l, l.pos)
@@ -248,22 +255,22 @@ next_token :: proc(l: ^Lexer) -> Token {
 		type = .OpenParen
 	case ')':
 		type = .CloseParen
-  case '#':
-    if peek_byte(l) == '(' {
-      next_ch(l)
-      next_ch(l)
+	case '#':
+		if peek_byte(l) == '(' {
+			next_ch(l)
+			next_ch(l)
 
-      for !(l.ch == ')' && peek_byte(l) == '#') && l.ch != -1 {
-        next_ch(l)
-      }
-      next_ch(l)
-      next_ch(l)
-    } else {
-      for l.ch != '\n' && l.ch != -1 {
-        next_ch(l)
-      }
-    }
-    return next_token(l)
+			for !(l.ch == ')' && peek_byte(l) == '#') && l.ch != -1 {
+				next_ch(l)
+			}
+			next_ch(l)
+			next_ch(l)
+		} else {
+			for l.ch != '\n' && l.ch != -1 {
+				next_ch(l)
+			}
+		}
+		return lexer_next_token(l)
 	case:
 		return read_identifier(l, loc)
 	}
@@ -282,7 +289,7 @@ destroy_token :: proc(token: Token) {
 
 import "core:testing"
 
-@(private)
+@(private = "file")
 test_expect_loc :: proc(t: ^testing.T, t_loc, expected_loc: Loc, additonal_info := "") {
 	testing.expectf(
 		t,
@@ -298,7 +305,7 @@ test_expect_loc :: proc(t: ^testing.T, t_loc, expected_loc: Loc, additonal_info 
 	)
 }
 
-@(private)
+@(private = "file")
 test_expect_token :: proc(
 	t: ^testing.T,
 	tok: Token,
@@ -317,7 +324,7 @@ test_expect_token :: proc(
 	test_expect_loc(t, tok.loc, expected_loc, additonal_info)
 }
 
-@(private)
+@(private = "file")
 test_expect_token_string :: proc(
 	t: ^testing.T,
 	tok: Token,
@@ -338,16 +345,15 @@ test_expect_token_string :: proc(
 	)
 }
 
-@(private)
+@(private = "file")
 test_make_lexer :: proc(t: ^testing.T, input: string) -> (lexer: Lexer, tokens: [dynamic]Token) {
-	lexer = Lexer{}
-	init(&lexer, input, "init.gm")
+	lexer = lexer_create(input, "init.gm")
 
 	tokens = make([dynamic]Token)
 
 	found_invalids := 0
 
-	for token := next_token(&lexer); token.type != .EOF; token = next_token(&lexer) {
+	for token := lexer_next_token(&lexer); token.type != .EOF; token = lexer_next_token(&lexer) {
 		if token.type == .Invalid {
 			found_invalids += 1
 		}
@@ -367,7 +373,7 @@ test_make_lexer :: proc(t: ^testing.T, input: string) -> (lexer: Lexer, tokens: 
 	return
 }
 
-@(private)
+@(private = "file")
 test_delete_tokens :: proc(tokens: [dynamic]Token) {
 	for token in tokens {
 		destroy_token(token)
@@ -375,7 +381,7 @@ test_delete_tokens :: proc(tokens: [dynamic]Token) {
 	delete(tokens)
 }
 
-@(private)
+@(private = "file")
 test_expect_tokens :: proc(t: ^testing.T, expected_tokens: []Token, actual_tokens: []Token) {
 
 	if !testing.expectf(
@@ -389,7 +395,7 @@ test_expect_tokens :: proc(t: ^testing.T, expected_tokens: []Token, actual_token
 	}
 
 	for tok, i in expected_tokens {
-    index_error := fmt.aprintf("(index %d e: %v, a: %v)", i, tok, actual_tokens[i])
+		index_error := fmt.aprintf("(index %d e: %v, a: %v)", i, tok, actual_tokens[i])
 		defer delete(index_error)
 
 		if s, ok := tok.data.(string); ok {
@@ -422,24 +428,34 @@ basic_block :: proc(t: ^testing.T) {
 
 @(test)
 basic_escape :: proc(t: ^testing.T) {
-  input := "\\\\ \\(\\)"
-  _, tokens := test_make_lexer(t, input)
-  defer test_delete_tokens(tokens)
+	input := "\\\\ \\(\\)"
+	_, tokens := test_make_lexer(t, input)
+	defer test_delete_tokens(tokens)
 
-  test_expect_tokens(t, []Token{
-    {type = .Runes, loc = {line = 1, column = 1}, data = "\\"},
-    {type = .Runes, loc = {line = 1, column = 4}, data = "()"},
-  }, tokens[:])
+	test_expect_tokens(
+		t,
+		[]Token {
+			{type = .Runes, loc = {line = 1, column = 1}, data = "\\"},
+			{type = .Runes, loc = {line = 1, column = 4}, data = "()"},
+		},
+		tokens[:],
+	)
 }
 
 @(test)
 correct_comment_handling :: proc(t: ^testing.T) {
-  input := `
+	input := `
   # Hello World
   #(hi)#
   hi
   `
-  _, tokens := test_make_lexer(t, input)
-  defer test_delete_tokens(tokens)
-  test_expect_tokens(t, []Token{{type = .Identifier, loc = {line = 4, column = 3}, data = "hi"}}, tokens[:])
+
+
+	_, tokens := test_make_lexer(t, input)
+	defer test_delete_tokens(tokens)
+	test_expect_tokens(
+		t,
+		[]Token{{type = .Identifier, loc = {line = 4, column = 3}, data = "hi"}},
+		tokens[:],
+	)
 }
