@@ -11,6 +11,9 @@ Desc :: struct {
 
 desc_init :: proc() -> Desc {
   return Desc {
-    
+    dims = common.pair_init(u32, 600,800),
+    title = "glint",
+    gl_version = common.pair_init(u8, 4,1),
+    depth_buffer = false
   }
 }
