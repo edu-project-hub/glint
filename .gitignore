@@ -4,3 +4,4 @@ bin/
 *.a
 .direnv
 __pycache__
+glint/shader/*.odin
