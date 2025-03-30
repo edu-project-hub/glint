@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "glint:app"
+import "glint:common"
 import "glint:shaders"
 import sg "sokol:gfx"
 import sgl "sokol:gl"
