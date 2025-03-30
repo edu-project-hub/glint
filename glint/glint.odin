@@ -18,6 +18,8 @@ main :: proc() {
 		glint_app = v
 	}
 
+  app.glint_app_make_this(&glint_app)
+
 	sg.setup(app.glint_app_get_sg(&glint_app))
 	defer sg.shutdown()
 
