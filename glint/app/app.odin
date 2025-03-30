@@ -94,7 +94,7 @@ glint_app_get_sg :: proc(app: ^Glint_App) -> sg.Desc {
 	}
 }
 
-// TODO(fabrice): move width and height to state 
+// FIXME(fabbboy): move width and height to state 
 // implement event loop to handle this and remove usage of GetFramebufferSize
 @(private = "file")
 glfw_get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
