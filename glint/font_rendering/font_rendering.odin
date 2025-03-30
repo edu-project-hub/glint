@@ -2,9 +2,6 @@ package font_rendering
 
 import "core:c"
 import fs "vendor:fontstash"
-// Don't know fontstash and sokol but I would've used: https://github.com/nothings/stb 
-// specifically: https://github.com/nothings/stb/blob/master/stb_truetype.h
-// but if fontstash fits the bill why not just suggestion
 
 import sg "sokol:gfx"
 
