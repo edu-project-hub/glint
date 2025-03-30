@@ -2,7 +2,7 @@ package main
 
 import "core:fmt"
 import "glint:app"
-import "shaders"
+import "glint:shaders"
 import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"

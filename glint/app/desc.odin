@@ -1,6 +1,6 @@
 package app
 
-import "../common"
+import "glint:common"
 
 Desc :: struct {
 	dims:         common.Pair(i32),
