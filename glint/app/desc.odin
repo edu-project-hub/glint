@@ -12,7 +12,7 @@ Desc :: struct {
 
 desc_init :: proc() -> Desc {
 	return Desc {
-		dims = common.pair_init(i32, 800, 800),
+		dims = common.pair_init(i32, 800, 600),
 		title = "glint",
 		gl_version = common.pair_init(u8, 4, 1),
 		no_depth_buffer = true,
