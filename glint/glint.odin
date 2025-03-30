@@ -1,8 +1,8 @@
 package main
 
 import "core:fmt"
-import "font_rendering"
-import "shaders"
+import "glint:app"
+import "glint:shaders"
 import sg "sokol:gfx"
 import sgl "sokol:gl"
 import slog "sokol:log"
