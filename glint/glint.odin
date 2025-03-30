@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "glint:app"
+import "glint:common"
 import "glint:shaders"
 import sg "sokol:gfx"
 import slog "sokol:log"
@@ -10,7 +11,13 @@ import "vendor:glfw"
 main :: proc() {
 	glint_app: app.Glint_App
 
-	app_res := app.glint_app_init(app.desc_init()) // default settings
+	app_res := app.glint_app_init({
+    dims = common.pair_init(i32, 800, 600),
+		title = "glint",
+		gl_version = common.pair_init(u8, 4, 1),
+		no_depth_buffer = true,
+		vsync = true,
+  }) 
 	switch v in app_res {
 	case app.Glint_App_Err:
 		fmt.println(v)
