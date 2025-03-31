@@ -82,7 +82,7 @@ create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	app.window = glfw.CreateWindow(
 		app.dims.x,
 		app.dims.y,
-		copied_title, // ilegal odin string is not null terminated
+		copied_title, 
 		nil,
 		nil,
 	)
