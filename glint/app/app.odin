@@ -79,13 +79,7 @@ create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	copied_title := strings.clone_to_cstring(desc.title, context.allocator)
 	defer delete(copied_title)
 
-	app.window = glfw.CreateWindow(
-		app.dims.x,
-		app.dims.y,
-		copied_title, 
-		nil,
-		nil,
-	)
+	app.window = glfw.CreateWindow(app.dims.x, app.dims.y, copied_title, nil, nil)
 
 	if app.window == nil {
 		return {}, Glint_App_Err.Glfw_Window_Failed
@@ -135,8 +129,8 @@ get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 }
 
 poll_events :: proc($Ctx: typeid, app: ^Glint_App, evl: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
+  glfw.PollEvents()
 	if glfw.WindowShouldClose(app.window) == true {
-		fmt.println("should append close")
 		err := push_event(Ctx, evl, EvCloseRequest{})
 		if err != nil {
 			return err

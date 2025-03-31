@@ -8,7 +8,6 @@ import slog "sokol:log"
 import "vendor:glfw"
 
 handler :: proc(self: ^int, evl: ^app.Event_Loop(int), event: app.Event) {
-  fmt.println("looped")
 	switch v in event {
 	case app.EvCloseRequest:
     app.exit_loop(int, evl)

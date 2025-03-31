@@ -60,13 +60,11 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 	}
 
 	for {
-		// fmt.println("still running") commented out to remove clutter but is executed
 		if !self.running {
 			break
 		}
 
 		for {
-			//fmt.printfln("lets loop one more len of events: %d", len(self.events)) commented out to remove clutter but is not executed
 			if len(self.events) == 0 {
 				break
 			}
@@ -74,7 +72,6 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			event := pop(&self.events)
 			self.callbacks.handle(self.ctx, self, event)
 		}
-		// fmt.println("polling") commented out to remove clutter but is executed
 		poll_events(Ctx, &self.app, self)
 	}
 
@@ -82,7 +79,7 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 }
 
 push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
-  fmt.printfln("appending event %v", event)
+	fmt.printfln("appending event %v", event)
 	_, err := append_elem(&self.events, event)
 	if err != nil {
 		return err
