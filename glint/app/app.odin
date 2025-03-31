@@ -1,6 +1,8 @@
 package app
 
 import "core:c"
+import "core:strings"
+import "core:mem"
 import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"
@@ -54,10 +56,13 @@ create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err, bool) {
 	}
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
+  copied_title := strings.clone_to_cstring(desc.title, context.allocator)
+  defer mem.free(rawptr(copied_title))
+
 	app.window = glfw.CreateWindow(
 		app.dims[0],
 		app.dims[1],
-		cstring(raw_data(desc.title)),
+		copied_title, // ilegal odin string is not null terminated
 		nil,
 		nil,
 	)
