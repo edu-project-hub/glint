@@ -110,14 +110,13 @@ get_env :: proc(app: ^Glint_App) -> sg.Environment {
 
 // FIXME(fabbboy): move width and height to state 
 // implement event loop to handle this and remove usage of GetFramebufferSize
-@(private = "file")
-glfw_get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
+get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
 	width, height: c.int = glfw.GetFramebufferSize(app.window)
 	return width, height
 }
 
 get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
-	width, height := glfw_get_dims(app)
+	width, height := get_dims(app)
 
 	return sg.Swapchain {
 		width = width,

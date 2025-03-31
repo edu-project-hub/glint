@@ -4,8 +4,8 @@
 package font_rendering
 
 import "core:c"
-import "core:mem"
 import "core:fmt"
+import "core:mem"
 import fs "vendor:fontstash"
 import "vendor:nanovg"
 
@@ -139,7 +139,7 @@ sfons_render_draw :: proc(sfons: ^Sokol_Fons) {
 		verts[5] = {c[4], c[5], instance.uv_max.x, instance.uv_max.y}
 
 		for vert in verts {
-      fmt.println("Drawing", vert.x, vert.y, vert.z, vert.w, transmute(u32)instance.color)
+			fmt.println("Drawing", vert.x, vert.y, vert.z, vert.w, transmute(u32)instance.color)
 			sgl.v2f_t2f_c1i(vert.x, vert.y, vert.z, vert.w, transmute(u32)instance.color)
 		}
 
@@ -226,7 +226,7 @@ sfons_draw_text :: proc(
 			uv_max  = {quad.s1, quad.t1},
 			color   = color,
 		}
-    fmt.println(new_instance)
+		fmt.println(new_instance)
 		append(&sfons.instances, new_instance)
 	}
 

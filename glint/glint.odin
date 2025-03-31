@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "glint:app"
 import "glint:shaders"
+import dt "sokol:debugtext"
 import sg "sokol:gfx"
 import sgl "sokol:gl"
 import slog "sokol:log"
@@ -28,6 +29,21 @@ main :: proc() {
 
 	sg.setup({environment = app.get_env(&glint_app), logger = {func = slog.func}})
 	defer sg.shutdown()
+
+	dt.setup(
+		dt.Desc {
+			logger = {func = slog.func},
+			fonts = {
+				0 = dt.font_kc853(),
+				1 = dt.font_kc854(),
+				2 = dt.font_z1013(),
+				3 = dt.font_cpc(),
+				4 = dt.font_c64(),
+				5 = dt.font_oric(),
+			},
+		},
+	)
+	defer dt.shutdown()
 	
 	// odinfmt: disable
   vertices := [?]f32{
@@ -63,13 +79,19 @@ main :: proc() {
 
 	for !glfw.WindowShouldClose(app.get_window(&glint_app)) {
 		{
+			width, height := app.get_dims(&glint_app)
+			dt.canvas(f32(width), f32(height))
+			dt.puts("Hello World!")
+
 			//FIXME(fabbboy): should be handled by event
 			sg.begin_pass({swapchain = app.get_swapchain(&glint_app)})
 			defer sg.end_pass()
+			dt.draw()
 			sg.apply_pipeline(pip)
 			sg.apply_bindings(bind)
 			sg.draw(0, 3, 1)
 		}
+		sg.commit()
 		glfw.SwapBuffers(app.get_window(&glint_app))
 		glfw.PollEvents()
 	}

@@ -6,80 +6,33 @@ import fs "vendor:fontstash"
 import sg "sokol:gfx"
 
 Text_Decoration :: enum {
-  Bold,
-  Italic,
+	Bold,
+	Italic,
 }
-
-Inter :: #load("Inter/Inter-VariableFont_opsz-wght.ttf")
 
 Text_Decorations :: bit_set[Text_Decoration]
 
-Text_Renderer :: struct{
-  atlas_image: sg.Image,
+Inter :: #load("Inter/Inter-VariableFont_opsz-wght.ttf")
 
-  fs: fs.FontContext,
+Text_Renderer :: struct {
+	texture: sg.Image,
+	fc:      fs.FontContext,
 }
 
-render_text :: proc(r: ^Text_Renderer, text: string, deocrations: Text_Decorations) {
-  
-}
+text_renderer_create_texture :: proc(tr: ^Text_Renderer, width, height: int) {
+	assert(tr != nil)
 
-create_atlas :: proc(r: ^Text_Renderer) {
-  r.atlas_image = sg.make_image(sg.Image_Desc{
-    usage = .DYNAMIC,
-    render_target = true,
-    num_mipmaps = 1,
-    width = c.int(r.fs.width),
-    height = c.int(r.fs.height),
-  })
+	tr.texture = sg.make_image(
+		sg.Image_Desc {
+			width = c.int(width),
+			height = c.int(height),
+			pixel_format = .R8,
+			usage = .DYNAMIC,
+			data = sg.Image_Data {
+				subimage = {
+					0 = {0 = {ptr = raw_data(tr.fc.textureData), size = len(fc.textureData)}},
+				},
+			},
+		},
+	)
 }
-
-write_atlas :: proc(r: ^Text_Renderer) {
-  //sg.update_image(r.atlas_image, { r.fs.textureData  })
-}
-
-//Context :: struct {
-//  // stuff
-//  image: Maybe(sg.Image),
-//  width: c.int,
-//  height: c.int,
-//}
-//
-//render_create :: proc(user_ptr: rawptr, width, height: c.int) -> c.int {
-//  c := cast(^Context)user_ptr
-//
-//  if c.image != nil {
-//    sg.destroy_image(c.image.(sg.Image))
-//  }
-//
-//  c.image = sg.make_image(sg.Image_Desc{
-//    render_target = true,
-//    usage = .DYNAMIC,
-//    width = width,
-//    height = height,
-//  })
-//
-//  c.width = width
-//  c.height = height
-//
-//  return 1
-//}
-//
-//render_resize :: proc(user_ptr: rawptr, width, height: c.int) -> c.int {
-//  return render_create(user_ptr, width, height)
-//}
-//
-//render_update :: proc(user_ptr: rawptr, rect: [^]c.int, data: [^]c.char) {
-//  c := cast(^Context)user_ptr
-//  w := rect[2] - rect[0]
-//  h := rect[3] - rect[1]
-//
-//  if c.image == nil {
-//    return
-//  }
-//
-//
-//}
-//
-//test :: proc() {
-//}
