@@ -1,6 +1,17 @@
 package app
 
+import "core:c"
+import "vendor:glfw"
 import "glint:common"
+
+Glfw_State :: struct {
+	sample_count:    c.int,
+	no_depth_buffer: bool,
+	version_major:   c.int,
+	version_minor:   c.int,
+	window:          glfw.WindowHandle,
+}
+
 
 Desc :: struct {
 	dims:         common.Pair(i32),

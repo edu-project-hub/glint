@@ -65,30 +65,14 @@ main :: proc() {
 		return
 	}
 
-	w, h := glfw.GetFramebufferSize(glfw_window())
-	sfons := font_rendering.sfons_create({width = int(w), height = int(h)})
-	defer font_rendering.sfons_destroy(sfons)
-
-	for !glfw.WindowShouldClose(glfw_window()) {
-		w, h := glfw.GetFramebufferSize(glfw_window())
-		font_rendering.sfons_render_resize(&sfons, int(w), int(h))
-		font_rendering.sfons_draw_text(
-			&fc,
-			&sfons,
-			"HELLO WORLD DEEZ NUTS",
-			font,
-			{0, 0},
-			size = 100,
-		)
+	for !glfw.WindowShouldClose(app.get_window(&glint_app)) {
 		{
-			sgl.defaults()
-			font_rendering.sfons_render_draw(&sfons)
-			sg.begin_pass({action = pass_action, swapchain = glfw_swapchain()})
+			//FIXME(fabbboy): should be handled by event
+			sg.begin_pass({swapchain = app.get_swchain(&glint_app)})
 			defer sg.end_pass()
 			sgl.draw()
 		}
-		sg.commit()
-		glfw.SwapBuffers(glfw_window())
+		glfw.SwapBuffers(app.get_window(&glint_app))
 		glfw.PollEvents()
 	}
 
