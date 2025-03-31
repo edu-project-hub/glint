@@ -1,11 +1,11 @@
 package app
 
 import "core:c"
+import "core:fmt"
 import "core:strings"
 import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"
-import "core:fmt"
 
 SAMPLE_COUNT: c.int : 1
 
@@ -135,15 +135,15 @@ get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 }
 
 poll_events :: proc($Ctx: typeid, app: ^Glint_App, evl: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
-	if glfw.WindowShouldClose(get_window(app)) {
-    fmt.println("should append close")
+	if glfw.WindowShouldClose(app.window) == true {
+		fmt.println("should append close")
 		err := push_event(Ctx, evl, EvCloseRequest{})
-    if err != nil {
-      return err
-    }
+		if err != nil {
+			return err
+		}
 	}
 
-  return nil
+	return nil
 }
 
 destroy_app :: proc(app: ^Glint_App) {
