@@ -128,21 +128,8 @@ get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	}
 }
 
-@(private)
-start_render :: proc(app: ^Glint_App) {
-  sg.begin_pass({
-    swapchain = get_swapchain(app)
-  })
-}
-
-@(private)
-end_render :: proc(app: ^Glint_App) {
-  sg.end_pass()
-  glfw.SwapBuffers(app.window)
-}
-
 poll_events :: proc($Ctx: typeid, app: ^Glint_App, evl: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
-  glfw.PollEvents()
+	glfw.PollEvents()
 	if glfw.WindowShouldClose(app.window) == true {
 		err := push_event(Ctx, evl, EvCloseRequest{})
 		if err != nil {
@@ -151,6 +138,11 @@ poll_events :: proc($Ctx: typeid, app: ^Glint_App, evl: ^Event_Loop(Ctx)) -> Gli
 	}
 
 	return nil
+}
+
+@(private)
+swap_buffers :: proc(app: ^Glint_App) {
+  glfw.SwapBuffers(get_window(app))
 }
 
 destroy_app :: proc(app: ^Glint_App) {

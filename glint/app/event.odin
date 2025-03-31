@@ -78,9 +78,11 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			event := pop(&self.events)
 			#partial switch v in event {
 			case RedrawRequest:
-				start_render(&self.app)
+				sg.begin_pass({swapchain = get_swapchain(&self.app)})
 				self.callbacks.handle(self.ctx, self, event)
-				end_render(&self.app)
+        sg.end_pass()
+			  sg.commit()
+        swap_buffers(&self.app)
 				continue
 			}
 
