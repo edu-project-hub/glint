@@ -26,30 +26,15 @@ main :: proc() {
 
 	sg.setup({environment = app.get_env(&glint_app), logger = {func = slog.func}})
 	defer sg.shutdown()
+	
+	// odinfmt: disable
+  vertices := [?]f32{
+    0.0,  0.5, 0.5,   1.0, 0.0, 0.0, 1.0,
+    0.5, -0.5, 0.5,   0.0, 1.0, 0.0, 1.0,
+   -0.5, -0.5, 0.5,   0.0, 0.0, 1.0, 1.0,
+  }
 
-	vertices := [?]f32 {
-		0.0,
-		0.5,
-		0.5,
-		1.0,
-		0.0,
-		0.0,
-		1.0,
-		0.5,
-		-0.5,
-		0.5,
-		0.0,
-		1.0,
-		0.0,
-		1.0,
-		-0.5,
-		-0.5,
-		0.5,
-		0.0,
-		0.0,
-		1.0,
-		1.0,
-	}
+	// odinfmt: enable
 
 	vbuf := sg.make_buffer({data = {ptr = &vertices, size = size_of(vertices)}})
 	defer sg.destroy_buffer(vbuf)
