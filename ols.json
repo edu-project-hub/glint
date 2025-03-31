@@ -4,6 +4,10 @@
       {
         "name": "sokol",
         "path": "./vendor/sokol-odin/sokol"
+      },
+      {
+        "name": "glint",
+        "path": "./glint"
       }
     ],
     "enable_document_symbols": true,

@@ -1,69 +1,75 @@
 package main
 
 import "core:fmt"
+import "glint:app"
+import "glint:shaders"
 import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"
-import "shaders"
 
 main :: proc() {
-  glfw_init({
-    title = "glint Browser",
-    width = 640,
-    height = 480,
-    no_depth_buffer = true,
-  })
-  defer glfw.Terminate()
 
-  sg.setup({
-    environment = glfw_environment(),
-    logger = { func = slog.func },
-  })
-  defer sg.shutdown()
+	glint_app, err := app.create(
+		{
+			dims = {800, 600},
+			title = "glint",
+			gl_version = {4, 1},
+			depth_buffer = false,
+			no_vsync = true,
+		},
+	)
 
+	if err != nil {
+		fmt.println(err)
+		unreachable()
+	}
+
+	sg.setup({environment = app.get_env(&glint_app), logger = {func = slog.func}})
+	defer sg.shutdown()
+	
+	// odinfmt: disable
   vertices := [?]f32{
-     0.0,  0.5, 0.5,   1.0, 0.0, 0.0, 1.0,
-     0.5, -0.5, 0.5,   0.0, 1.0, 0.0, 1.0,
-    -0.5, -0.5, 0.5,   0.0, 0.0, 1.0, 1.0,
+    0.0,  0.5, 0.5,   1.0, 0.0, 0.0, 1.0,
+    0.5, -0.5, 0.5,   0.0, 1.0, 0.0, 1.0,
+   -0.5, -0.5, 0.5,   0.0, 0.0, 1.0, 1.0,
   }
 
-  vbuf := sg.make_buffer({
-    data = {
-      ptr = &vertices, size = size_of(vertices)
-    },
-  })
-  defer sg.destroy_buffer(vbuf)
+	// odinfmt: enable
 
-  shd := sg.make_shader(shaders.triangle_shader_desc(sg.query_backend()))
-  defer sg.destroy_shader(shd)
+	vbuf := sg.make_buffer({data = {ptr = &vertices, size = size_of(vertices)}})
+	defer sg.destroy_buffer(vbuf)
 
-  pip := sg.make_pipeline({
-    shader = shd,
-    layout = {
-      attrs = {
-        shaders.ATTR_triangle_position = {format = .FLOAT3},
-        shaders.ATTR_triangle_color0 = {format = .FLOAT4},
-      },
-    },
-  })
-  defer sg.destroy_pipeline(pip)
+	shd := sg.make_shader(shaders.triangle_shader_desc(sg.query_backend()))
+	defer sg.destroy_shader(shd)
 
-  bind := sg.Bindings{
-    vertex_buffers = {
-      0 = vbuf,
-    }
-  }
+	pip := sg.make_pipeline(
+		{
+			shader = shd,
+			layout = {
+				attrs = {
+					shaders.ATTR_triangle_position = {format = .FLOAT3},
+					shaders.ATTR_triangle_color0 = {format = .FLOAT4},
+				},
+			},
+		},
+	)
+	defer sg.destroy_pipeline(pip)
 
-  for !glfw.WindowShouldClose(glfw_window()) {
-    {
-      sg.begin_pass({swapchain = glfw_swapchain()})
-      defer sg.end_pass()
-      sg.apply_pipeline(pip)
-      sg.apply_bindings(bind)
-      sg.draw(0, 3, 1)
-    }
-    glfw.SwapBuffers(glfw_window())
-    glfw.PollEvents()
-  }
+	bind := sg.Bindings {
+		vertex_buffers = {0 = vbuf},
+	}
+
+	for !glfw.WindowShouldClose(app.get_window(&glint_app)) {
+		{
+			//FIXME(fabbboy): should be handled by event
+			sg.begin_pass({swapchain = app.get_swapchain(&glint_app)})
+			defer sg.end_pass()
+			sg.apply_pipeline(pip)
+			sg.apply_bindings(bind)
+			sg.draw(0, 3, 1)
+		}
+		glfw.SwapBuffers(app.get_window(&glint_app))
+		glfw.PollEvents()
+	}
 
 }

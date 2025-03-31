@@ -9,7 +9,7 @@ TARGET := $(BIN_DIR)/glint
 TOOLS_DIR := $(WORKDIR)/tools
 SOKOL := $(WORKDIR)/vendor/sokol-odin/sokol
 
-ODIN_FLAGS += -out:$(TARGET) -collection:sokol=$(SOKOL)
+ODIN_FLAGS += -out:$(TARGET) -collection:sokol=$(SOKOL) -collection:glint=$(ODIN_DIR)
 
 .PHONY: all clean run prepare $(TARGET) generate_shaders
 
