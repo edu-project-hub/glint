@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import "glint:app"
-import "glint:common"
 import "glint:shaders"
 import sg "sokol:gfx"
 import sgl "sokol:gl"
@@ -11,10 +10,23 @@ import fs "vendor:fontstash"
 import "vendor:glfw"
 
 main :: proc() {
-	glfw_init({title = "glint Browser", width = 640, height = 480, no_depth_buffer = true})
-	defer glfw.Terminate()
 
-	sg.setup({environment = glfw_environment(), logger = {func = slog.func}})
+	glint_app, err, ok := app.create(
+		{
+			dims = {800, 600},
+			title = "glint",
+			gl_version = {4, 1},
+			depth_buffer = false,
+			no_vsync = true,
+		},
+	)
+
+	if !ok {
+		fmt.println(err)
+		unreachable()
+	}
+
+	sg.setup({environment = app.get_env(&glint_app), logger = {func = slog.func}})
 	defer sg.shutdown()
 
 	sgl.setup({logger = {func = slog.func}})
@@ -68,7 +80,7 @@ main :: proc() {
 	for !glfw.WindowShouldClose(app.get_window(&glint_app)) {
 		{
 			//FIXME(fabbboy): should be handled by event
-			sg.begin_pass({swapchain = app.get_swchain(&glint_app)})
+			sg.begin_pass({swapchain = app.get_swapchain(&glint_app)})
 			defer sg.end_pass()
 			sgl.draw()
 		}

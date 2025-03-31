@@ -2,31 +2,22 @@ package app
 
 import "core:c"
 import "vendor:glfw"
-import "glint:common"
-
-Glfw_State :: struct {
-	sample_count:    c.int,
-	no_depth_buffer: bool,
-	version_major:   c.int,
-	version_minor:   c.int,
-	window:          glfw.WindowHandle,
-}
-
 
 Desc :: struct {
-	dims:         common.Pair(i32),
+	dims:         [2]i32,
 	title:        string,
-	gl_version:   common.Pair(u8),
-	no_depth_buffer: bool,
-	vsync:        bool,
+	gl_version:   [2]u8,
+	depth_buffer: bool,
+	no_vsync:     bool,
 }
 
-desc_init :: proc() -> Desc {
-	return Desc {
-		dims = common.pair_init(i32, 800, 800),
-		title = "glint",
-		gl_version = common.pair_init(u8, 4, 1),
-		no_depth_buffer = true,
-		vsync = true,
+@(private)
+desc_defaults :: proc(desc: Desc) -> Desc {
+	return {
+		dims = desc.dims if desc.dims[0] > 0 && desc.dims[1] > 0 else {800, 600},
+		title = desc.title if desc.title != "" else "glint",
+		gl_version = desc.gl_version if desc.gl_version[0] > 0 && desc.gl_version[0] > 0 else {4, 1},
+		depth_buffer = desc.depth_buffer,
+		no_vsync = desc.no_vsync,
 	}
 }
