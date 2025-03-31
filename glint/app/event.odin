@@ -7,10 +7,14 @@ import slog "sokol:log"
 
 EvCloseRequest :: struct {}
 RedrawRequest :: struct {}
+ResizeRequest :: struct {
+	dims: [2]i32,
+}
 
 Event :: union {
 	EvCloseRequest,
 	RedrawRequest,
+	ResizeRequest,
 }
 
 Handle_Nil :: struct {}
@@ -20,7 +24,6 @@ Glint_Loop_Err :: union {
 	Handle_Nil,
 }
 
-
 Event_CB :: struct($Ctx: typeid) {
 	handle:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), event: Event),
 	shutdown: proc(ctx: ^Ctx),
@@ -28,7 +31,7 @@ Event_CB :: struct($Ctx: typeid) {
 
 Event_Loop :: struct($Ctx: typeid) {
 	app:       Glint_App,
-	events:    [dynamic]Event,
+	events:    ^[dynamic]Event,
 	callbacks: Event_CB(Ctx),
 	ctx:       ^Ctx,
 	running:   bool,
@@ -43,7 +46,8 @@ create_loop :: proc(
 	Event_Loop(Ctx),
 	Glint_App_Err,
 ) {
-	app, err := create_app(desc)
+	events := new([dynamic]Event)
+	app, err := create_app(desc, events)
 	if err != nil {
 		return {}, err
 	}
@@ -52,13 +56,24 @@ create_loop :: proc(
 
 	return Event_Loop(Ctx) {
 			app = app,
-			events = make([dynamic]Event, 0, 10),
+			events = events,
 			callbacks = callbacks,
 			ctx = ctx,
 			running = true,
 		},
 		nil
 }
+
+pop :: proc(events: ^[dynamic]Event) -> (Event, bool) {
+	if len(events^) == 0 {
+		return {}, false
+	}
+
+	event := events[0]
+	ordered_remove(events, 0)
+	return event, true
+}
+
 
 run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 	if self.callbacks.handle == nil {
@@ -75,14 +90,19 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 				break
 			}
 
-			event := pop(&self.events)
+			event, ok := pop(self.events)
+			if !ok {
+				break
+			}
 			#partial switch v in event {
+			case ResizeRequest:
+				update_window(&self.app, v.dims)
 			case RedrawRequest:
 				sg.begin_pass({swapchain = get_swapchain(&self.app)})
 				self.callbacks.handle(self.ctx, self, event)
-        sg.end_pass()
-			  sg.commit()
-        swap_buffers(&self.app)
+				sg.end_pass()
+				sg.commit()
+				swap_buffers(&self.app)
 				continue
 			}
 
@@ -96,7 +116,7 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 }
 
 push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
-	_, err := append_elem(&self.events, event)
+	_, err := append_elem(self.events, event)
 	if err != nil {
 		return err
 	}
@@ -110,8 +130,7 @@ destroy_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
 	}
 
 	sg.shutdown()
-
-	delete(self.events)
+	free(self.events)
 }
 
 exit_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {

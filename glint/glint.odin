@@ -11,9 +11,10 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 	switch v in event {
 	case app.EvCloseRequest:
 		app.exit_loop(Glint_Browser, evl)
-  case app.RedrawRequest:  
-    
-    fmt.println("redraw requested")
+	case app.RedrawRequest:
+		break
+	case app.ResizeRequest:
+		break
 	}
 }
 

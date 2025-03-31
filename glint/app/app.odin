@@ -1,5 +1,6 @@
 package app
 
+import "base:runtime"
 import "core:c"
 import "core:fmt"
 import "core:strings"
@@ -28,6 +29,11 @@ desc_defaults :: proc(desc: Desc) -> Desc {
 	}
 }
 
+@(private)
+Callback_Data :: struct {
+	events: ^[dynamic]Event,
+	ctx:    runtime.Context,
+}
 
 Glint_App_Err :: enum {
 	Glfw_Init_Failed,
@@ -41,10 +47,18 @@ Glint_App :: struct {
 	version_minor: c.int,
 	window:        glfw.WindowHandle,
 	dims:          [2]i32,
+	cb_data:       ^Callback_Data,
 }
 
+glfwBufferResizeCallback :: proc "c" (win: glfw.WindowHandle, width, height: c.int) {
+	window_data := cast(^Callback_Data)glfw.GetWindowUserPointer(win)
+	context = window_data.ctx
 
-create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
+	dims := [2]i32{i32(width), i32(height)}
+	runtime.append_elem(window_data.events, ResizeRequest{dims = dims})
+}
+
+create_app :: proc(desc: Desc, queue: ^[dynamic]Event) -> (Glint_App, Glint_App_Err) {
 	assert(desc.title != "")
 	assert(desc.dims.x > 0)
 	assert(desc.dims.y > 0)
@@ -57,6 +71,12 @@ create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	app.version_major = c.int(desc_def.gl_version.x)
 	app.version_minor = c.int(desc_def.gl_version.y)
 	app.dims = desc.dims
+
+	cb_data := new(Callback_Data)
+	cb_data.ctx = context
+	cb_data.events = queue
+
+	app.cb_data = cb_data
 
 	if (glfw.Init() == false) {
 		return {}, Glint_App_Err.Glfw_Init_Failed
@@ -89,6 +109,8 @@ create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	if !desc.no_vsync {
 		glfw.SwapInterval(1)
 	}
+	glfw.SetWindowUserPointer(app.window, app.cb_data)
+	glfw.SetFramebufferSizeCallback(app.window, glfwBufferResizeCallback)
 
 	return app, nil
 }
@@ -103,20 +125,11 @@ get_env :: proc(app: ^Glint_App) -> sg.Environment {
 	}
 }
 
-// FIXME(fabbboy): move width and height to state 
-// implement event loop to handle this and remove usage of GetFramebufferSize
-@(private = "file")
-glfw_get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
-	width, height: c.int = glfw.GetFramebufferSize(app.window)
-	return width, height
-}
 
 get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
-	width, height := glfw_get_dims(app)
-
 	return sg.Swapchain {
-		width = width,
-		height = height,
+		width = app.dims.x,
+		height = app.dims.y,
 		sample_count = app.sample_count,
 		color_format = .RGBA8,
 		depth_format = .NONE if app.depth_buffer else .DEPTH_STENCIL,
@@ -142,7 +155,11 @@ poll_events :: proc($Ctx: typeid, app: ^Glint_App, evl: ^Event_Loop(Ctx)) -> Gli
 
 @(private)
 swap_buffers :: proc(app: ^Glint_App) {
-  glfw.SwapBuffers(get_window(app))
+	glfw.SwapBuffers(get_window(app))
+}
+
+update_window :: proc(app: ^Glint_App, dims: [2]i32) {
+	app.dims = dims
 }
 
 destroy_app :: proc(app: ^Glint_App) {
