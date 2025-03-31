@@ -28,13 +28,15 @@ main :: proc() {
 
 	sg.setup({environment = app.get_env(&glint_app), logger = {func = slog.func}})
 	defer sg.shutdown()
+	
+	// odinfmt: disable
+  vertices := [?]f32{
+    0.0,  0.5, 0.5,   1.0, 0.0, 0.0, 1.0,
+    0.5, -0.5, 0.5,   0.0, 1.0, 0.0, 1.0,
+   -0.5, -0.5, 0.5,   0.0, 0.0, 1.0, 1.0,
+  }
 
-	sgl.setup({logger = {func = slog.func}})
-	defer sgl.shutdown()
-
-	pass_action := sg.Pass_Action {
-		colors = {0 = {load_action = .CLEAR, clear_value = {0.5, 0, 0, 0}}},
-	}
+	// odinfmt: enable
 
 	//vertices := [?]f32{
 	//   0.0,  0.5, 0.5,   1.0, 0.0, 0.0, 1.0,
