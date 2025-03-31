@@ -55,7 +55,7 @@ glfwBufferResizeCallback :: proc "c" (win: glfw.WindowHandle, width, height: c.i
 	context = window_data.ctx
 
 	dims := [2]i32{i32(width), i32(height)}
-	runtime.append_elem(window_data.events, ResizeRequest{dims = dims})
+	runtime.append_elem(window_data.events, EvResizeRequest{dims = dims})
 }
 
 create_app :: proc(desc: Desc, queue: ^[dynamic]Event) -> (Glint_App, Glint_App_Err) {

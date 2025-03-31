@@ -12,7 +12,7 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 	case app.EvCloseRequest:
 		app.exit_loop(Glint_Browser, evl)
 		break
-	case app.RedrawRequest:
+	case app.EvRedrawRequest:
 		bind := sg.Bindings {
 			vertex_buffers = {0 = self.vbuf},
 		}
@@ -21,7 +21,7 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 		sg.apply_bindings(bind)
 		sg.draw(0, 3, 1)
 		break
-	case app.ResizeRequest:
+	case app.EvResizeRequest:
 		app.update_window(&evl.app, v.dims)
 		break
 	}

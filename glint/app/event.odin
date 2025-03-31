@@ -6,15 +6,15 @@ import sg "sokol:gfx"
 import slog "sokol:log"
 
 EvCloseRequest :: struct {}
-RedrawRequest :: struct {}
-ResizeRequest :: struct {
+EvRedrawRequest :: struct {}
+EvResizeRequest :: struct {
 	dims: [2]i32,
 }
 
 Event :: union {
 	EvCloseRequest,
-	RedrawRequest,
-	ResizeRequest,
+	EvRedrawRequest,
+	EvResizeRequest,
   // Additional events such as key input, mouse movements, window movement, focus gained, focus lost, and others can be added here.
 }
 
@@ -101,7 +101,7 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 				break
 			}
 			#partial switch v in event {
-			case RedrawRequest:
+			case EvRedrawRequest:
 				sg.begin_pass({swapchain = get_swapchain(&self.app)})
 				self.callbacks.handle(self.ctx, self, event)
 				sg.end_pass()
@@ -113,7 +113,7 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			self.callbacks.handle(self.ctx, self, event)
 		}
 		poll_events(Ctx, &self.app, self)
-		push_event(Ctx, self, RedrawRequest{})
+		push_event(Ctx, self, EvRedrawRequest{})
 	}
 
 	return nil
