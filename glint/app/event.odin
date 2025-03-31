@@ -95,8 +95,6 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 				break
 			}
 			#partial switch v in event {
-			case ResizeRequest:
-				update_window(&self.app, v.dims)
 			case RedrawRequest:
 				sg.begin_pass({swapchain = get_swapchain(&self.app)})
 				self.callbacks.handle(self.ctx, self, event)

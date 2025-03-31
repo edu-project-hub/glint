@@ -14,7 +14,7 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 	case app.RedrawRequest:
 		break
 	case app.ResizeRequest:
-		break
+		app.update_window(&evl.app, v.dims)
 	}
 }
 
