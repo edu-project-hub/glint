@@ -79,7 +79,6 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 }
 
 push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
-	fmt.printfln("appending event %v", event)
 	_, err := append_elem(&self.events, event)
 	if err != nil {
 		return err
