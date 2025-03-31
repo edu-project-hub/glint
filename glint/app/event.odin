@@ -2,6 +2,8 @@ package app
 
 import "core:fmt"
 import "core:mem"
+import sg "sokol:gfx"
+import slog "sokol:log"
 
 EvCloseRequest :: struct {}
 RedrawRequest :: struct {}
@@ -46,6 +48,8 @@ create_loop :: proc(
 		return {}, err
 	}
 
+	sg.setup({logger = {func = slog.func}, environment = get_env(&app)})
+
 	return Event_Loop(Ctx) {
 			app = app,
 			events = make([dynamic]Event, 0, 10),
@@ -74,9 +78,9 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			event := pop(&self.events)
 			#partial switch v in event {
 			case RedrawRequest:
-        start_render(&self.app)
-        self.callbacks.handle(self.ctx, self, event)
-        end_render(&self.app)
+				start_render(&self.app)
+				self.callbacks.handle(self.ctx, self, event)
+				end_render(&self.app)
 				continue
 			}
 
@@ -102,6 +106,8 @@ destroy_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
 	if self.callbacks.shutdown != nil {
 		self.callbacks.shutdown(self.ctx)
 	}
+
+	sg.shutdown()
 
 	delete(self.events)
 }
