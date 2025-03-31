@@ -15,6 +15,7 @@ Event :: union {
 	EvCloseRequest,
 	RedrawRequest,
 	ResizeRequest,
+  // Additional events such as key input, mouse movements, window movement, focus gained, focus lost, and others can be added here.
 }
 
 Handle_Nil :: struct {}
