@@ -13,75 +13,74 @@ Glint_App_Err :: enum {
 }
 
 Glint_App :: struct {
-	state: Glfw_State,
-	desc:  Desc,
+	sample_count:    c.int,
+	depth_buffer: bool,
+	version_major:   c.int,
+	version_minor:   c.int,
+	window:          glfw.WindowHandle,
+	dims:            [2]i32
 }
 
-Glint_App_Result :: union {
-	Glint_App,
-	Glint_App_Err,
-}
 
-init :: proc(desc: Desc) -> Glint_App_Result {
+create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err, bool) {
 	assert(desc.title != "")
-	assert(desc.dims.first > 0)
-	assert(desc.dims.second > 0)
+	assert(desc.dims[0]> 0)
+	assert(desc.dims[1]> 0)
 
-	state := Glfw_State{}
-	state.sample_count = SAMPLE_COUNT
-	state.no_depth_buffer = desc.no_depth_buffer
-	state.version_major = c.int(desc.gl_version.first)
-	state.version_minor = c.int(desc.gl_version.second)
+  desc_def := desc_defaults(desc)
+
+	app := Glint_App{}
+	app.sample_count = SAMPLE_COUNT
+	app.depth_buffer = desc_def.depth_buffer
+	app.version_major = c.int(desc_def.gl_version[0])
+	app.version_minor = c.int(desc_def.gl_version[1])
+	app.dims = desc.dims
 
 	if (glfw.Init() == false) {
-		return Glint_App_Err.Glfw_Init_Failed
+		return {}, Glint_App_Err.Glfw_Init_Failed, false
 	}
 
-	if (desc.no_depth_buffer) {
+	if (app.depth_buffer) {
 		glfw.WindowHint(glfw.DEPTH_BITS, false)
 		glfw.WindowHint(glfw.STENCIL_BITS, false)
 	}
 
 	glfw.WindowHint(glfw.SAMPLES, SAMPLE_COUNT)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, state.version_major)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, state.version_minor)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, app.version_major)
+	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, app.version_minor)
 	when ODIN_OS == .Darwin { 	// only needed on macos. Scoped compilation?
 		glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, true)
 		glfw.WindowHint(glfw.COCOA_RETINA_FRAMEBUFFER, false)
 	}
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
-	state.window = glfw.CreateWindow(
-		desc.dims.first,
-		desc.dims.second,
+	app.window = glfw.CreateWindow(
+		app.dims[0],
+		app.dims[1],
 		cstring(raw_data(desc.title)),
 		nil,
 		nil,
 	)
-	if state.window == nil {
-		return Glint_App_Err.Glfw_Window_Failed
+
+	if app.window == nil {
+		return {}, Glint_App_Err.Glfw_Window_Failed, false
 	}
 
-	return Glint_App{state = state, desc = desc}
+	glfw.MakeContextCurrent(app.window)
+	if !desc.no_vsync {
+    glfw.SwapInterval(1)
+  }
+
+	return app, nil, true
 }
 
-make_this :: proc(app: ^Glint_App) {
-	glfw.MakeContextCurrent(app.state.window)
-	if app.desc.vsync {
-		glfw.SwapInterval(1)
-	}
-}
-
-get_sokol_desc :: proc(app: ^Glint_App) -> sg.Desc {
-	return sg.Desc {
-		environment = {
-			defaults = {
-				color_format = .RGBA8,
-				depth_format = .NONE if app.desc.no_depth_buffer else .DEPTH_STENCIL,
-				sample_count = app.state.sample_count,
-			},
+get_env :: proc(app: ^Glint_App) -> sg.Environment {
+	return sg.Environment {
+		defaults = {
+			color_format = .RGBA8,
+			depth_format = .NONE if app.depth_buffer else .DEPTH_STENCIL,
+			sample_count = app.sample_count,
 		},
-		logger = {func = slog.func},
 	}
 }
 
@@ -89,19 +88,19 @@ get_sokol_desc :: proc(app: ^Glint_App) -> sg.Desc {
 // implement event loop to handle this and remove usage of GetFramebufferSize
 @(private = "file")
 glfw_get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
-	width, height: c.int = glfw.GetFramebufferSize(app.state.window)
+	width, height: c.int = glfw.GetFramebufferSize(app.window)
 	return width, height
 }
 
-get_swchain :: proc(app: ^Glint_App) -> sg.Swapchain {
+get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	width, height := glfw_get_dims(app)
 
 	return sg.Swapchain {
 		width = width,
 		height = height,
-		sample_count = app.state.sample_count,
+		sample_count = app.sample_count,
 		color_format = .RGBA8,
-		depth_format = .NONE if app.state.no_depth_buffer else .DEPTH_STENCIL,
+		depth_format = .NONE if app.depth_buffer else .DEPTH_STENCIL,
 		gl = {
 			// TODO(robin): Add Metal support
 			// we just assume here that the GL framebuffer is always 0
@@ -110,11 +109,12 @@ get_swchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	}
 }
 
-deinit :: proc(app: ^Glint_App) {
-  glfw.DestroyWindow(app.state.window)
-  glfw.Terminate()
+destroy :: proc(app: ^Glint_App) {
+	glfw.DestroyWindow(app.window)
+	app.window = nil
+	glfw.Terminate()
 }
 
-get_window :: proc(app: ^Glint_App) -> (glfw.WindowHandle) {
-  return app.state.window
+get_window :: proc(app: ^Glint_App) -> glfw.WindowHandle {
+	return app.window
 }
