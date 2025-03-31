@@ -26,6 +26,7 @@ Glint_Loop_Err :: union {
 
 Event_CB :: struct($Ctx: typeid) {
 	handle:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), event: Event),
+	prepare:  proc(ctx: ^Ctx),
 	shutdown: proc(ctx: ^Ctx),
 }
 
@@ -79,6 +80,10 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 	if self.callbacks.handle == nil {
 		return Handle_Nil{}
 	}
+
+  if self.callbacks.prepare != nil {
+    self.callbacks.prepare(self.ctx)
+  }
 
 	for {
 		if !self.running {

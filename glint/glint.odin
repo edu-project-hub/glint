@@ -11,15 +11,20 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 	switch v in event {
 	case app.EvCloseRequest:
 		app.exit_loop(Glint_Browser, evl)
+		break
 	case app.RedrawRequest:
+		bind := sg.Bindings {
+			vertex_buffers = {0 = self.vbuf},
+		}
+
+		sg.apply_pipeline(self.pipeline)
+		sg.apply_bindings(bind)
+		sg.draw(0, 3, 1)
 		break
 	case app.ResizeRequest:
 		app.update_window(&evl.app, v.dims)
+		break
 	}
-}
-
-shutdown :: proc(self: ^Glint_Browser) {
-
 }
 
 main :: proc() {
@@ -34,7 +39,7 @@ main :: proc() {
 			depth_buffer = false,
 			no_vsync = true,
 		},
-		app.Event_CB(Glint_Browser){handle = handler, shutdown = shutdown},
+		app.Event_CB(Glint_Browser){handle = handler, prepare = prepare, shutdown = shutdown},
 		&browser,
 	)
 	defer app.destroy_loop(Glint_Browser, &evl)
