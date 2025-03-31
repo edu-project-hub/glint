@@ -43,7 +43,7 @@ Glint_App :: struct {
 }
 
 
-create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
+create_app :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	assert(desc.title != "")
 	assert(desc.dims.x > 0)
 	assert(desc.dims.y > 0)
@@ -133,7 +133,7 @@ get_swapchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	}
 }
 
-destroy :: proc(app: ^Glint_App) {
+destroy_app :: proc(app: ^Glint_App) {
 	glfw.DestroyWindow(app.window)
 	app.window = nil
 	glfw.Terminate()
