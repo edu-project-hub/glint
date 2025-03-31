@@ -11,7 +11,7 @@ import "vendor:glfw"
 
 main :: proc() {
 
-	glint_app, err, ok := app.create(
+	glint_app, err := app.create(
 		{
 			dims = {800, 600},
 			title = "glint",
@@ -21,7 +21,7 @@ main :: proc() {
 		},
 	)
 
-	if !ok {
+	if err != nil {
 		fmt.println(err)
 		unreachable()
 	}

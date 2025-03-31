@@ -1,7 +1,6 @@
 package app
 
 import "core:c"
-import "core:mem"
 import "core:strings"
 import sg "sokol:gfx"
 import slog "sokol:log"
@@ -20,9 +19,9 @@ Desc :: struct {
 @(private)
 desc_defaults :: proc(desc: Desc) -> Desc {
 	return {
-		dims = desc.dims if desc.dims[0] > 0 && desc.dims[1] > 0 else {800, 600},
+		dims = desc.dims if desc.dims.x > 0 && desc.dims.y > 0 else {800, 600},
 		title = desc.title if desc.title != "" else "glint",
-		gl_version = desc.gl_version if desc.gl_version[0] > 0 && desc.gl_version[0] > 0 else {4, 1},
+		gl_version = desc.gl_version if desc.gl_version.x > 0 && desc.gl_version.x > 0 else {4, 1},
 		depth_buffer = desc.depth_buffer,
 		no_vsync = desc.no_vsync,
 	}
@@ -44,22 +43,22 @@ Glint_App :: struct {
 }
 
 
-create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err, bool) {
+create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err) {
 	assert(desc.title != "")
-	assert(desc.dims[0] > 0)
-	assert(desc.dims[1] > 0)
+	assert(desc.dims.x > 0)
+	assert(desc.dims.y > 0)
 
 	desc_def := desc_defaults(desc)
 
 	app := Glint_App{}
 	app.sample_count = SAMPLE_COUNT
 	app.depth_buffer = desc_def.depth_buffer
-	app.version_major = c.int(desc_def.gl_version[0])
-	app.version_minor = c.int(desc_def.gl_version[1])
+	app.version_major = c.int(desc_def.gl_version.x)
+	app.version_minor = c.int(desc_def.gl_version.y)
 	app.dims = desc.dims
 
 	if (glfw.Init() == false) {
-		return {}, Glint_App_Err.Glfw_Init_Failed, false
+		return {}, Glint_App_Err.Glfw_Init_Failed
 	}
 
 	if (app.depth_buffer) {
@@ -77,18 +76,18 @@ create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err, bool) {
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
 	copied_title := strings.clone_to_cstring(desc.title, context.allocator)
-	defer mem.free(rawptr(copied_title))
+	defer delete(copied_title)
 
 	app.window = glfw.CreateWindow(
-		app.dims[0],
-		app.dims[1],
+		app.dims.x,
+		app.dims.y,
 		copied_title, // ilegal odin string is not null terminated
 		nil,
 		nil,
 	)
 
 	if app.window == nil {
-		return {}, Glint_App_Err.Glfw_Window_Failed, false
+		return {}, Glint_App_Err.Glfw_Window_Failed
 	}
 
 	glfw.MakeContextCurrent(app.window)
@@ -96,7 +95,7 @@ create :: proc(desc: Desc) -> (Glint_App, Glint_App_Err, bool) {
 		glfw.SwapInterval(1)
 	}
 
-	return app, nil, true
+	return app, nil
 }
 
 get_env :: proc(app: ^Glint_App) -> sg.Environment {
