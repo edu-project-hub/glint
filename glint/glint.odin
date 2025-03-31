@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "glint:app"
+import "glint:font_rendering"
 import "glint:shaders"
 import dt "sokol:debugtext"
 import sg "sokol:gfx"
