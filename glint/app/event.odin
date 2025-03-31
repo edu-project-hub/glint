@@ -4,9 +4,11 @@ import "core:fmt"
 import "core:mem"
 
 EvCloseRequest :: struct {}
+RedrawRequest :: struct {}
 
 Event :: union {
 	EvCloseRequest,
+	RedrawRequest,
 }
 
 Handle_Nil :: struct {}
@@ -70,9 +72,18 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			}
 
 			event := pop(&self.events)
+			#partial switch v in event {
+			case RedrawRequest:
+        start_render(&self.app)
+        self.callbacks.handle(self.ctx, self, event)
+        end_render(&self.app)
+				continue
+			}
+
 			self.callbacks.handle(self.ctx, self, event)
 		}
 		poll_events(Ctx, &self.app, self)
+		push_event(Ctx, self, RedrawRequest{})
 	}
 
 	return nil
