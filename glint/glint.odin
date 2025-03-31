@@ -8,7 +8,11 @@ import slog "sokol:log"
 import "vendor:glfw"
 
 handler :: proc(self: ^int, evl: ^app.Event_Loop(int), event: app.Event) {
-
+  fmt.println("looped")
+	switch v in event {
+	case app.EvCloseRequest:
+    app.exit_loop(int, evl)
+	}
 }
 
 shutdown :: proc(self: ^int) {
@@ -31,7 +35,9 @@ main :: proc() {
 		app.Event_CB(int){handle = handler, shutdown = shutdown},
 		&ctx,
 	)
-  defer app.destroy_loop(int, &evl)
+	defer app.destroy_loop(int, &evl)
+
+	app.run_loop(int, &evl)
 
 	glint_app, err := app.create_app(
 		{

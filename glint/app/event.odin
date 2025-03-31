@@ -1,6 +1,21 @@
 package app
 
-Event :: union {}
+import "core:mem"
+import "core:fmt"
+
+EvCloseRequest :: struct {}
+
+Event :: union {
+	EvCloseRequest,
+}
+
+Handle_Nil :: struct {}
+
+Glint_Loop_Err :: union {
+	mem.Allocator_Error,
+	Handle_Nil,
+}
+
 
 Event_CB :: struct($Ctx: typeid) {
 	handle:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), event: Event),
@@ -12,6 +27,7 @@ Event_Loop :: struct($Ctx: typeid) {
 	events:    [dynamic]Event,
 	callbacks: Event_CB(Ctx),
 	ctx:       ^Ctx,
+	running:   bool,
 }
 
 create_loop :: proc(
@@ -33,8 +49,43 @@ create_loop :: proc(
 			events = make([dynamic]Event, 0, 10),
 			callbacks = callbacks,
 			ctx = ctx,
+			running = true,
 		},
 		nil
+}
+
+run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
+	if self.callbacks.handle == nil {
+		return Handle_Nil{}
+	}
+
+	for {
+		if !self.running {
+			break
+		}
+
+		for {
+			if len(self.events) == 0 {
+				break
+			}
+
+			event := pop(&self.events)
+			self.callbacks.handle(self.ctx, self, event)
+		}
+    fmt.println("polling")
+		poll_events(Ctx, &self.app, self)
+	}
+
+	return nil
+}
+
+push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
+	_, err := append_elem(&self.events, event)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 destroy_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
@@ -43,4 +94,8 @@ destroy_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
 	}
 
 	delete(self.events)
+}
+
+exit_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
+  self.running = false
 }
