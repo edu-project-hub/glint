@@ -12,15 +12,6 @@ Glint_App_Err :: enum {
 	Glfw_Window_Failed,
 }
 
-Glfw_State :: struct {
-	sample_count:    c.int,
-	no_depth_buffer: bool,
-	version_major:   c.int,
-	version_minor:   c.int,
-	window:          glfw.WindowHandle,
-}
-
-
 Glint_App :: struct {
 	state: Glfw_State,
 	desc:  Desc,
@@ -31,7 +22,7 @@ Glint_App_Result :: union {
 	Glint_App_Err,
 }
 
-glint_app_init :: proc(desc: Desc) -> Glint_App_Result {
+init :: proc(desc: Desc) -> Glint_App_Result {
 	assert(desc.title != "")
 	assert(desc.dims.first > 0)
 	assert(desc.dims.second > 0)
@@ -74,14 +65,14 @@ glint_app_init :: proc(desc: Desc) -> Glint_App_Result {
 	return Glint_App{state = state, desc = desc}
 }
 
-glint_app_make_this :: proc(app: ^Glint_App) {
+make_this :: proc(app: ^Glint_App) {
 	glfw.MakeContextCurrent(app.state.window)
 	if app.desc.vsync {
 		glfw.SwapInterval(1)
 	}
 }
 
-glint_app_get_sg :: proc(app: ^Glint_App) -> sg.Desc {
+get_sokol_desc :: proc(app: ^Glint_App) -> sg.Desc {
 	return sg.Desc {
 		environment = {
 			defaults = {
@@ -102,7 +93,7 @@ glfw_get_dims :: proc(app: ^Glint_App) -> (c.int, c.int) {
 	return width, height
 }
 
-glint_app_swchain :: proc(app: ^Glint_App) -> sg.Swapchain {
+get_swchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	width, height := glfw_get_dims(app)
 
 	return sg.Swapchain {
@@ -119,11 +110,11 @@ glint_app_swchain :: proc(app: ^Glint_App) -> sg.Swapchain {
 	}
 }
 
-glint_app_deinit :: proc(app: ^Glint_App) {
+deinit :: proc(app: ^Glint_App) {
   glfw.DestroyWindow(app.state.window)
   glfw.Terminate()
 }
 
-glint_app_window :: proc(app: ^Glint_App) -> (glfw.WindowHandle) {
+get_window :: proc(app: ^Glint_App) -> (glfw.WindowHandle) {
   return app.state.window
 }
