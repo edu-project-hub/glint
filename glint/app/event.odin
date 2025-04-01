@@ -16,7 +16,6 @@ Event :: union {
 	// Additional events such as key input, mouse movements, window movement, focus gained, focus lost, and others can be added here.
 }
 
-Handle_Nil :: struct {}
 Internal_Error :: struct {
 	msg: string,
 }
@@ -27,7 +26,6 @@ User_Err :: struct {
 
 Glint_Loop_Err :: union {
 	mem.Allocator_Error,
-	Handle_Nil,
 	Internal_Error,
 	User_Err,
 }
