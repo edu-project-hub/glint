@@ -1,5 +1,7 @@
 package main
 
+import "core:fmt"
+import "glint:app"
 import "glint:shaders"
 import sg "sokol:gfx"
 
@@ -41,4 +43,30 @@ shutdown :: proc(self: ^Glint_Browser) {
 	sg.destroy_buffer(self.vbuf)
 	sg.destroy_shader(self.shd)
 	sg.destroy_pipeline(self.pipeline)
+}
+
+handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event: app.Event) {
+	switch v in event {
+	case app.EvCloseRequest:
+		app.exit_loop(Glint_Browser, evl)
+		break
+	case app.EvResizeRequest:
+		app.update_window(&evl.app, v.dims)
+		break
+	}
+}
+
+render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) {
+	bind := sg.Bindings {
+		vertex_buffers = {0 = self.vbuf},
+	}
+
+	sg.apply_pipeline(self.pipeline)
+	sg.apply_bindings(bind)
+	sg.draw(0, 3, 1)
+}
+
+error :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), err: app.Glint_Loop_Err) {
+	fmt.print("Error: %s\n", err)
+	app.exit_loop(Glint_Browser, evl)
 }

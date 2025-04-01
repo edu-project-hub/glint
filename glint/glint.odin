@@ -7,26 +7,6 @@ import sg "sokol:gfx"
 import slog "sokol:log"
 import "vendor:glfw"
 
-handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event: app.Event) {
-	switch v in event {
-	case app.EvCloseRequest:
-		app.exit_loop(Glint_Browser, evl)
-		break
-	case app.EvRedrawRequest:
-		bind := sg.Bindings {
-			vertex_buffers = {0 = self.vbuf},
-		}
-
-		sg.apply_pipeline(self.pipeline)
-		sg.apply_bindings(bind)
-		sg.draw(0, 3, 1)
-		break
-	case app.EvResizeRequest:
-		app.update_window(&evl.app, v.dims)
-		break
-	}
-}
-
 main :: proc() {
 	browser := Glint_Browser{}
 
@@ -39,7 +19,13 @@ main :: proc() {
 			depth_buffer = false,
 			no_vsync = true,
 		},
-		app.Event_CB(Glint_Browser){handle = handler, prepare = prepare, shutdown = shutdown},
+		app.Event_CB(Glint_Browser) {
+			handle = handler,
+			prepare = prepare,
+			shutdown = shutdown,
+			render = render,
+      error = error
+		},
 		&browser,
 	)
 	defer app.destroy_loop(Glint_Browser, &evl)
