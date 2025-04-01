@@ -71,14 +71,16 @@ create_loop :: proc(
 }
 
 pop :: proc(events: ^[dynamic]Event) -> (Event, bool) {
+  assert(events != nil, "Events queue must not be nil")
 	if len(events^) == 0 {
 		return {}, false
 	}
 
 	//TODO(robaertschi): Wouldn't it make sense to use a double ended queue, or just pop the events of the end.
 
-	ev, ok := pop(events)
-	return ev, ok
+	event := events[0]
+	ordered_remove(events, 0)
+	return event, true
 }
 
 
