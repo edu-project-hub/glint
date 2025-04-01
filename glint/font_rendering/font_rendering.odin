@@ -42,9 +42,53 @@ setup :: proc(desc: Desc) -> (trs: Text_Rendering_State) {
 	if !fs.AddFallbackFont(&trs.fc, trs.inter, trs.inter) {
 		fmt.println("failed to add fallback font")
 	}
-	trs.renderer = text_renderer_create(&trs.fc)
+	trs.renderer = text_renderer_create(&trs.fc, trs.desc.atlas.x, trs.desc.atlas.y)
 
 	return
+}
+
+draw_text :: proc(
+  trs: ^Text_Rendering_State,
+	text: string,
+	pos: [2]f32,
+	size: f32 = 36,
+	color: [3]f32 = {1, 1, 1},
+	blur: f32 = 0,
+	spacing: f32 = 0,
+	align_h: fs.AlignHorizontal = .LEFT,
+	align_v: fs.AlignVertical = .BASELINE,
+	//x_inc: ^f32 = nil,
+	//y_inc: ^f32 = nil,
+) {
+	state := fs.__getState(&trs.fc)
+	state^ = fs.State {
+		size    = size, // TODO(robin): * os_get_dpi()
+		blur    = blur,
+		spacing = spacing,
+		font    = trs.inter,
+		ah      = align_h,
+		av      = align_v,
+	}
+
+	//if y_inc != nil {
+	//	_, _, lh := fs.VerticalMetrics(fc)
+	//	y_inc^ += lh
+	//}
+
+	for iter := fs.TextIterInit(&trs.fc, pos.x, pos.y, text); true; {
+		quad: fs.Quad
+		fs.TextIterNext(&trs.fc, &iter, &quad) or_break
+	  text_renderer_draw_quad(&trs.renderer, color, quad)
+	}
+
+	//if x_inc != nil {
+	//	last := sfons.instances[len(sfons.instances) - 1]
+	//	x_inc^ += last.pos_max.x - pos.x
+	//}
+}
+
+draw :: proc(trs: ^Text_Rendering_State) {
+  text_renderer_draw(&trs.renderer)
 }
 
 shutdown :: proc(trs: Text_Rendering_State) {
@@ -74,7 +118,8 @@ Text_Renderer :: struct {
 	bnd:                sg.Bindings,
 }
 
-text_renderer_create :: proc(fc: ^fs.FontContext) -> (tr: Text_Renderer) {
+text_renderer_create :: proc(fc: ^fs.FontContext, width, height: int) -> (tr: Text_Renderer) {
+  text_renderer_create_texture(&tr, width, height)
 	tr.fc = fc
 	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE})
 	tr.shd = sg.make_shader(shaders.sfontstash_shader_desc(sg.query_backend()))
@@ -173,4 +218,7 @@ text_renderer_draw :: proc(tr: ^Text_Renderer) {
 	sg.apply_pipeline(tr.pip)
 	sg.apply_bindings(tr.bnd)
 	sg.draw(0, c.int(tr.end_vertex_index), 1)
+
+  tr.start_vertex_index = 0
+  tr.end_vertex_index = 0
 }
