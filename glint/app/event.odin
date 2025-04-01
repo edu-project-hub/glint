@@ -21,14 +21,15 @@ Internal_Error :: struct {
 	msg: string,
 }
 User_Err :: struct {
-  data: any
+	message: string,
+	error:   any,
 }
 
 Glint_Loop_Err :: union {
 	mem.Allocator_Error,
 	Handle_Nil,
-  Internal_Error,
-  User_Err
+	Internal_Error,
+	User_Err,
 }
 
 Event_CB :: struct($Ctx: typeid) {
@@ -75,7 +76,7 @@ create_loop :: proc(
 }
 
 pop_event :: proc(events: ^[dynamic]Event) -> (Event, bool) {
-  assert(events != nil, "Events queue must not be nil")
+	assert(events != nil, "Events queue must not be nil")
 	if len(events^) == 0 {
 		return {}, false
 	}
@@ -83,7 +84,7 @@ pop_event :: proc(events: ^[dynamic]Event) -> (Event, bool) {
 	//TODO(robaertschi): Wouldn't it make sense to use a double ended queue, or just pop the events of the end.
 
 	event := pop(events)
-  return event, true
+	return event, true
 }
 
 
@@ -125,10 +126,10 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 			}
 
 			err := self.callbacks.handle(self.ctx, self, event)
-      if err != nil {
-        exit_loop(Ctx, self)
-        return err
-      }
+			if err != nil {
+				exit_loop(Ctx, self)
+				return err
+			}
 		}
 		err := poll_events(Ctx, &self.app, self)
 		if err != nil {
@@ -137,7 +138,7 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 		}
 	}
 
-  return nil
+	return nil
 }
 
 push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
