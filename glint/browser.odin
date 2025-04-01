@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "glint:app"
 import "glint:shaders"
+import "glint:text_renderer"
 import sg "sokol:gfx"
 
 // odinfmt: disable
@@ -17,6 +18,7 @@ Glint_Browser :: struct {
 	vbuf:     sg.Buffer,
 	shd:      sg.Shader,
 	pipeline: sg.Pipeline,
+	tr:       text_renderer.Text_Rendering_State,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
@@ -37,12 +39,15 @@ prepare :: proc(self: ^Glint_Browser) {
 			},
 		},
 	)
+
+  self.tr = text_renderer.setup({})
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
-	sg.destroy_buffer(self.vbuf)
-	sg.destroy_shader(self.shd)
+  text_renderer.shutdown(self.tr)
 	sg.destroy_pipeline(self.pipeline)
+	sg.destroy_shader(self.shd)
+	sg.destroy_buffer(self.vbuf)
 }
 
 handler :: proc(
@@ -63,6 +68,8 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
+  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!!", {0, 0})
+
 	bind := sg.Bindings {
 		vertex_buffers = {0 = self.vbuf},
 	}
@@ -70,6 +77,8 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 	sg.apply_pipeline(self.pipeline)
 	sg.apply_bindings(bind)
 	sg.draw(0, 3, 1)
+
+  text_renderer.draw(&self.tr)
 
 	return nil
 }

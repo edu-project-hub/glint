@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import "glint:app"
-import "glint:font_rendering"
 import "glint:shaders"
 import dt "sokol:debugtext"
 import sg "sokol:gfx"
@@ -38,7 +37,7 @@ main :: proc() {
 	if err != nil {
 		#partial switch e in err {
 		case app.User_Err:
-			fmt.println(e.data)
+			fmt.println(e.message)
 		case:
 			fmt.println("Different error type:", err)
 		}

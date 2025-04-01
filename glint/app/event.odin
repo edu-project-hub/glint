@@ -5,7 +5,8 @@ import "core:mem"
 import sg "sokol:gfx"
 import slog "sokol:log"
 
-EvCloseRequest :: struct {}
+EvCloseRequest :: struct {
+}
 EvResizeRequest :: struct {
 	dims: [2]i32,
 }
