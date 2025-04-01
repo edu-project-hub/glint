@@ -45,7 +45,11 @@ shutdown :: proc(self: ^Glint_Browser) {
 	sg.destroy_pipeline(self.pipeline)
 }
 
-handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event: app.Event) {
+handler :: proc(
+	self: ^Glint_Browser,
+	evl: ^app.Event_Loop(Glint_Browser),
+	event: app.Event,
+) -> app.Glint_Loop_Err {
 	switch v in event {
 	case app.EvCloseRequest:
 		app.exit_loop(Glint_Browser, evl)
@@ -54,9 +58,11 @@ handler :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), event
 		app.update_window(&evl.app, v.dims)
 		break
 	}
+
+	return nil
 }
 
-render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) {
+render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
 	bind := sg.Bindings {
 		vertex_buffers = {0 = self.vbuf},
 	}
@@ -64,6 +70,8 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) {
 	sg.apply_pipeline(self.pipeline)
 	sg.apply_bindings(bind)
 	sg.draw(0, 3, 1)
+
+	return nil
 }
 
 error :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser), err: app.Glint_Loop_Err) {

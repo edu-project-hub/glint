@@ -24,11 +24,19 @@ main :: proc() {
 			prepare = prepare,
 			shutdown = shutdown,
 			render = render,
-      error = error
+			error = error,
 		},
 		&browser,
 	)
 	defer app.destroy_loop(Glint_Browser, &evl)
 
-	app.run_loop(Glint_Browser, &evl)
+	err := app.run_loop(Glint_Browser, &evl)
+	if err != nil {
+		#partial switch e in err {
+		case app.User_Err:
+			fmt.println(e.data)
+		case:
+			fmt.println("Different error type:", err)
+		}
+	}
 }

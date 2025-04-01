@@ -20,18 +20,22 @@ Handle_Nil :: struct {}
 Internal_Error :: struct {
 	msg: string,
 }
+User_Err :: struct {
+  data: any
+}
 
 Glint_Loop_Err :: union {
 	mem.Allocator_Error,
 	Handle_Nil,
   Internal_Error,
+  User_Err
 }
 
 Event_CB :: struct($Ctx: typeid) {
-	handle:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), event: Event),
+	handle:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), event: Event) -> Glint_Loop_Err,
 	prepare:  proc(ctx: ^Ctx),
 	shutdown: proc(ctx: ^Ctx),
-	render:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx)),
+	render:   proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx)) -> Glint_Loop_Err,
 	error:    proc(ctx: ^Ctx, loop: ^Event_Loop(Ctx), err: Glint_Loop_Err),
 }
 
@@ -83,7 +87,7 @@ pop_event :: proc(events: ^[dynamic]Event) -> (Event, bool) {
 }
 
 
-run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
+run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 	assert(self.callbacks.render != nil, "Render callback must be set")
 	assert(self.callbacks.handle != nil, "Handle callback must be set")
 	assert(self.callbacks.error != nil, "Error callback must be set")
@@ -120,7 +124,11 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
 				break
 			}
 
-			self.callbacks.handle(self.ctx, self, event)
+			err := self.callbacks.handle(self.ctx, self, event)
+      if err != nil {
+        exit_loop(Ctx, self)
+        return err
+      }
 		}
 		err := poll_events(Ctx, &self.app, self)
 		if err != nil {
@@ -128,6 +136,8 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) {
 			break
 		}
 	}
+
+  return nil
 }
 
 push_event :: proc($Ctx: typeid, self: ^Event_Loop(Ctx), event: Event) -> mem.Allocator_Error {
