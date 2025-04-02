@@ -299,7 +299,7 @@ text_destroy :: proc(self: ^Text) {
 text_render :: proc(self: ^Text, model: linalg.Matrix4f32) {
 	data := shaders.Text_Vs_Params {
 		model = convert_matrix_to_array(model),
-		color = {1.0, 2.0, 2.0, 1.0},
+		color = {0.1, 0.2, 0.2, 1.0},
 	}
 
 	sg.apply_pipeline(self.pipeline.(sg.Pipeline))

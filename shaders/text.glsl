@@ -32,7 +32,7 @@ out vec4 frag_color;
 
 void main() {
     float alpha = texture(sampler2D(tex, tex_sampler), uv).r;
-    frag_color = vec4(text_color.rgb, text_color.a * alpha);
+   frag_color = vec4(text_color.rgb, text_color.a * alpha);
 }
 @end
 
