@@ -293,7 +293,7 @@ convert_matrix_to_array :: proc(m: matrix[4, 4]f32) -> [4][4]f32 {
 	a: [4][4]f32
 	for i in 0 ..< 4 {
 		for j in 0 ..< 4 {
-			a[i][j] = m[i, j]
+			a[j][i] = m[i, j] 
 		}
 	}
 	return a

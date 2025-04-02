@@ -21,7 +21,7 @@ Glint_Browser :: struct {
 }
 
 prepare :: proc(self: ^Glint_Browser) {
-	font, err := objects.font_create("arial.ttf", 1.0, 1024, 1024, {32, 126})
+	font, err := objects.font_create("arial.ttf", 48.0, 512, 512, {32, 127})
 	if err != nil {
 		fmt.println(err)
 	}

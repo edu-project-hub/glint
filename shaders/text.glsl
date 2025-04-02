@@ -17,7 +17,7 @@ out vec2 uv;
 out vec4 text_color;
 
 void main() {
-    gl_Position = model * proj * view * vec4(position, 0.0, 1.0);
+    gl_Position = proj * view * model * vec4(position, 0.0, 1.0);
     uv = texcoord;
     text_color = color;
 }
