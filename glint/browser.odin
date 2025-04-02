@@ -77,17 +77,19 @@ handler :: proc(
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
   dx.printf("Hello World")
-  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!! DEeeehdpfh apfdh pahdf phaspdfzh 89p", {0, 0})
+  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100})
+  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 200})
 
 	bind := sg.Bindings {
 		vertex_buffers = {0 = self.vbuf},
 	}
 
-	//sg.apply_pipeline(self.pipeline)
-	//sg.apply_bindings(bind)
-	//sg.draw(0, 3, 1)
+	sg.apply_pipeline(self.pipeline)
+	sg.apply_bindings(bind)
+	sg.draw(0, 3, 1)
 
-  text_renderer.draw(&self.tr)
+  w, h := app.get_framebuffer_size(&evl.app)
+  text_renderer.draw(&self.tr, int(w), int(h))
 
   dx.draw()
 	return nil

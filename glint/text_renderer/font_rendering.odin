@@ -2,6 +2,7 @@ package text_renderer
 
 import "core:c"
 import "core:fmt"
+import "core:math/linalg"
 import sg "sokol:gfx"
 import fs "vendor:fontstash"
 
@@ -37,14 +38,14 @@ desc_defaults :: proc(desc: Desc) -> Desc {
 
 setup :: proc(desc: Desc) -> (trs: Text_Rendering_State) {
 	trs.desc = desc_defaults(desc)
-  trs.fc = new(fs.FontContext)
+	trs.fc = new(fs.FontContext)
 	fs.Init(trs.fc, trs.desc.atlas.x, trs.desc.atlas.y, .TOPLEFT)
 	trs.inter = fs.AddFont(trs.fc, "Inter", Inter, false)
 	if !fs.AddFallbackFont(trs.fc, trs.inter, trs.inter) {
 		fmt.println("failed to add fallback font")
 	}
 	trs.renderer = new(Text_Renderer)
-  text_renderer_init(trs.renderer, trs.fc, trs.desc.atlas.x, trs.desc.atlas.y)
+	text_renderer_init(trs.renderer, trs.fc, trs.desc.atlas.x, trs.desc.atlas.y)
 
 	return
 }
@@ -89,17 +90,30 @@ draw_text :: proc(
 	//}
 }
 
-draw :: proc(trs: ^Text_Rendering_State) {
-  text_renderer_update_buffer(trs.renderer)
+draw :: proc(trs: ^Text_Rendering_State, width, height: int) {
+	if int(sg.query_image_width(trs.renderer.texture)) != trs.fc.width ||
+	   int(sg.query_image_height(trs.renderer.texture)) != trs.fc.height {
+		text_renderer_update_texture(trs.renderer, trs.fc.width, trs.fc.height)
+		fs.__dirtyRectReset(trs.fc)
+	} else if trs.fc.dirtyRect[0] < trs.fc.dirtyRect[2] &&
+	   trs.fc.dirtyRect[1] < trs.fc.dirtyRect[3] {
+		text_renderer_update_texture(trs.renderer, trs.fc.width, trs.fc.height)
+		fs.__dirtyRectReset(trs.fc)
+	}
+
+	text_renderer_update_projection(trs.renderer, f32(width), f32(height))
+
+	text_renderer_update_buffer(trs.renderer)
+	fmt.printfln("%#v", trs.renderer.vs_params)
 	text_renderer_draw(trs.renderer)
 }
 
 shutdown :: proc(trs: Text_Rendering_State) {
 	trs := trs
 	text_renderer_destroy(trs.renderer^)
-  free(trs.renderer)
+	free(trs.renderer)
 	fs.Destroy(trs.fc)
-  free(trs.fc)
+	free(trs.fc)
 }
 
 Vertex :: struct #packed {
@@ -121,12 +135,13 @@ Text_Renderer :: struct {
 	smp:                sg.Sampler,
 	pip:                sg.Pipeline,
 	bnd:                sg.Bindings,
+	vs_params:          shaders.Vs_Params,
 }
 
 text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, height: int) {
 	tr.fc = fc
 	text_renderer_create_texture(tr, width, height)
-	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE})
+	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE * size_of(Vertex)})
 	tr.shd = sg.make_shader(shaders.sfontstash_shader_desc(sg.query_backend()))
 	tr.smp = sg.make_sampler({min_filter = .LINEAR, mag_filter = .LINEAR})
 
@@ -138,6 +153,17 @@ text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, heigh
 					shaders.ATTR_sfontstash_position = {format = .FLOAT3},
 					shaders.ATTR_sfontstash_color0 = {format = .FLOAT3},
 					shaders.ATTR_sfontstash_texcoord0 = {format = .FLOAT2},
+				},
+			},
+			colors = {
+				0 = {
+					blend = {
+						enabled = true,
+						src_factor_rgb = .SRC_ALPHA,
+						dst_factor_rgb = .ONE_MINUS_SRC_ALPHA,
+						src_factor_alpha = .ONE,
+						dst_factor_alpha = .ONE_MINUS_SRC_ALPHA,
+					},
 				},
 			},
 		},
@@ -157,6 +183,10 @@ text_renderer_destroy :: proc(tr: Text_Renderer) {
 	sg.destroy_pipeline(tr.pip)
 }
 
+text_renderer_update_projection :: proc(tr: ^Text_Renderer, width, height: f32) {
+	tr.vs_params.proj = linalg.matrix_ortho3d(0, width, height, 0, -1, 1)
+}
+
 text_renderer_create_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 	assert(tr != nil)
 	assert(tr.texture.id == sg.INVALID_ID)
@@ -169,19 +199,24 @@ text_renderer_create_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 			usage = .DYNAMIC,
 		},
 	)
-  text_renderer_update_texture(tr, width, height)
 }
 
 text_renderer_update_texture :: proc(tr: ^Text_Renderer, width, height: int) {
+	fmt.println("rebuilding atlas")
 	sg.update_image(
 		tr.texture,
 		{
 			subimage = {
-				0 = {0 = {ptr = raw_data(tr.fc.textureData), size = len(tr.fc.textureData)}},
+				0 = {
+					0 = {
+						ptr = raw_data(tr.fc.textureData),
+						size = len(tr.fc.textureData) * size_of(byte),
+					},
+				},
 			},
 		},
 	)
-  fmt.println(tr.texture.id, tr.texture.id == sg.INVALID_ID, sg.query_image_state(tr.texture))
+	fmt.println(tr.texture.id, tr.texture.id == sg.INVALID_ID, sg.query_image_state(tr.texture))
 }
 
 // The returned slice is guaranteed to be size long
@@ -212,13 +247,14 @@ text_renderer_draw_quad :: proc(tr: ^Text_Renderer, color: [3]f32, q: fs.Quad) {
 }
 
 text_renderer_update_buffer :: proc(tr: ^Text_Renderer) {
-	sg.update_buffer(tr.buffer, {size = len(tr.vertices), ptr = raw_data(tr.vertices[:])})
+	sg.update_buffer(tr.buffer, {size = len(tr.vertices) * size_of(Vertex), ptr = &tr.vertices})
 }
 
 text_renderer_draw :: proc(tr: ^Text_Renderer) {
 	sg.apply_pipeline(tr.pip)
 	sg.apply_bindings(tr.bnd)
-  //fmt.println("drew", 0, c.int(tr.end_vertex_index), 1)
+	sg.apply_uniforms(shaders.UB_vs_params, {ptr = &tr.vs_params, size = size_of(tr.vs_params)})
+	//fmt.println("drew", 0, c.int(tr.end_vertex_index), 1)
 	sg.draw(0, c.int(tr.end_vertex_index), 1)
 
 	tr.start_vertex_index = 0
