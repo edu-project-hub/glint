@@ -41,12 +41,12 @@ font_create :: proc(
 	char_range: [2]u32,
 ) -> (
 	Font,
-	Text_Error,
+	union{Text_Error},
 ) {
 	f, err := load_font(filepath, font_size, height, width, char_range)
+  fmt.println(err)
 	if err != nil {
 		font_destroy(&f)
-		//TODO(robaertschi): please explain why err is nil even when load_font returned a error enum 
 		return {}, err
 	}
 
@@ -64,7 +64,7 @@ load_font :: proc(
 	char_range: [2]u32,
 ) -> (
 	Font,
-	Text_Error,
+	union{Text_Error},
 ) {
 	font: Font
 
