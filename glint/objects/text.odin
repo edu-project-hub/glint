@@ -46,7 +46,7 @@ font_create :: proc(
 	f, err := load_font(filepath, font_size, height, width, char_range)
 	if err != nil {
 		font_destroy(&f)
-    //TODO(robaertschi): please explain why err is nil even when load_font returned a error enum 
+		//TODO(robaertschi): please explain why err is nil even when load_font returned a error enum 
 		return {}, err
 	}
 
@@ -296,10 +296,10 @@ text_destroy :: proc(self: ^Text) {
 	}
 }
 
-text_render :: proc(self: ^Text, x, y: u32, model: linalg.Matrix4f32) {
+text_render :: proc(self: ^Text, model: linalg.Matrix4f32) {
 	data := shaders.Text_Vs_Params {
 		model = convert_matrix_to_array(model),
-		color = {1.0, 1.0, 1.0, 1.0},
+		color = {1.0, 2.0, 2.0, 1.0},
 	}
 
 	sg.apply_pipeline(self.pipeline.(sg.Pipeline))
