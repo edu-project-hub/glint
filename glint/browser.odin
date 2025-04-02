@@ -52,8 +52,8 @@ prepare :: proc(self: ^Glint_Browser) {
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
-  objects.text_destroy(&self.text)
-  objects.font_destroy(&self.font)
+	objects.text_destroy(&self.text)
+	objects.font_destroy(&self.font)
 }
 
 handler :: proc(
@@ -75,7 +75,16 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
+  //odinfmt: disable
+  model := linalg.Matrix4f32 {
+    f32(1), f32(0), f32(0), f32(0),
+    f32(0), f32(1), f32(0), f32(0),
+    f32(0), f32(0), f32(1), f32(0),
+    f32(0), f32(0), f32(0), f32(1),
+  };
+  //odinfmt: enable
 
+	objects.text_render(&self.text, 0, 0, model)
 
 	return nil
 }

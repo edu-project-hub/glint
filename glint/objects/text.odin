@@ -199,10 +199,9 @@ text_create :: proc(font: ^Font, projection: linalg.Matrix4f32) -> Text {
 }
 
 text_set :: proc(self: ^Text, content: string) {
-	//generate the vbo as well as uv_tl and uv_br
 	switch v in self.vbo {
 	case sg.Buffer:
-		sg.destroy_buffer(v) // delete old buffer as we will generate a new one
+		sg.destroy_buffer(v)
 	}
 
 	num_chars := len(content)
