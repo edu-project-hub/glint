@@ -207,7 +207,7 @@ text_create :: proc(font: ^Font) -> Text {
 	return {font = font, uv_br = 0, uv_tl = 0, vbo = nil, pipeline = nil, bind = nil}
 }
 
-text_set :: proc(self: ^Text, content: string, x: f32 = 0, y: f32 = 0) {
+text_set :: proc(self: ^Text, content: string) {
 	switch v in self.vbo {
 	case sg.Buffer:
 		sg.destroy_buffer(v)
@@ -228,7 +228,7 @@ text_set :: proc(self: ^Text, content: string, x: f32 = 0, y: f32 = 0) {
 		max_ascent = max(max_ascent, ascent)
 	}
 
-	pen_x, pen_y: f32 = x, y + max_ascent
+	pen_x, pen_y: f32 = 0, max_ascent
 	vertex_index := 0
 
 	for r in content {
