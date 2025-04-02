@@ -26,7 +26,9 @@ in vec2 texcoord;
 in vec3 color;
 out vec4 frag_color;
 void main() {
-  frag_color = texture(sampler2D(tex, smp), texcoord).r * vec4(color, 1.0);
+  float alpha = texture(sampler2D(tex, smp), texcoord).r;
+  alpha = alpha > 0.1 ? alpha : 0.0;
+  frag_color = alpha * vec4(color, 1.0);
 }
 @end
 

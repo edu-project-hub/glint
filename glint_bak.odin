@@ -20,7 +20,7 @@ main :: proc() {
 	defer sgl.shutdown()
 
 	pass_action := sg.Pass_Action {
-		colors = {0 = {load_action = .CLEAR, clear_value = {0.5, 0, 0, 0}}},
+		colors = {0 = {load_action = .CLEAR, clear_value = {0, 0, 0, 0}}},
 	}
 
 	//vertices := [?]f32{

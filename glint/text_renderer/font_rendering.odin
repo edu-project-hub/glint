@@ -2,6 +2,7 @@ package text_renderer
 
 import "core:c"
 import "core:fmt"
+import "core:math"
 import "core:math/linalg"
 import sg "sokol:gfx"
 import fs "vendor:fontstash"
@@ -31,8 +32,8 @@ Text_Rendering_State :: struct {
 @(private)
 desc_defaults :: proc(desc: Desc) -> Desc {
 	desc := desc
-	desc.atlas.x = desc.atlas.x if desc.atlas.x > 0 else 512
-	desc.atlas.y = desc.atlas.y if desc.atlas.y > 0 else 512
+	desc.atlas.x = desc.atlas.x if desc.atlas.x > 0 else 1024
+	desc.atlas.y = desc.atlas.y if desc.atlas.y > 0 else 1024
 	return desc
 }
 
@@ -63,6 +64,10 @@ draw_text :: proc(
 	//x_inc: ^f32 = nil,
 	//y_inc: ^f32 = nil,
 ) {
+  pos := pos
+  pos.x = math.round(pos.x)
+  pos.y = math.round(pos.y)
+
 	state := fs.__getState(trs.fc)
 	state^ = fs.State {
 		size    = size, // TODO(robin): * os_get_dpi()
@@ -104,7 +109,6 @@ draw :: proc(trs: ^Text_Rendering_State, width, height: int) {
 	text_renderer_update_projection(trs.renderer, f32(width), f32(height))
 
 	text_renderer_update_buffer(trs.renderer)
-	fmt.printfln("%#v", trs.renderer.vs_params)
 	text_renderer_draw(trs.renderer)
 }
 
@@ -143,7 +147,7 @@ text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, heigh
 	text_renderer_create_texture(tr, width, height)
 	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE * size_of(Vertex)})
 	tr.shd = sg.make_shader(shaders.sfontstash_shader_desc(sg.query_backend()))
-	tr.smp = sg.make_sampler({min_filter = .LINEAR, mag_filter = .LINEAR})
+	tr.smp = sg.make_sampler({min_filter = .NEAREST, mag_filter = .NEAREST})
 
 	tr.pip = sg.make_pipeline(
 		{
@@ -159,7 +163,7 @@ text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, heigh
 				0 = {
 					blend = {
 						enabled = true,
-						src_factor_rgb = .SRC_ALPHA,
+						src_factor_rgb = .ONE,
 						dst_factor_rgb = .ONE_MINUS_SRC_ALPHA,
 						src_factor_alpha = .ONE,
 						dst_factor_alpha = .ONE_MINUS_SRC_ALPHA,
