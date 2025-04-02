@@ -151,6 +151,11 @@ load_font :: proc(
 			&left_side_bearing,
 		)
 
+		xa := f32(advance_width) * scale
+		if xa < 0.1 {
+			xa = f32(glyph_width) + 1
+		}
+
 		font.chars[char_index] = CharInfo {
 			uv_min   = {f32(x) / f32(width), f32(y) / f32(height)},
 			uv_max   = {f32(x + glyph_width) / f32(width), f32(y + glyph_height) / f32(height)},
@@ -233,6 +238,17 @@ text_set :: proc(self: ^Text, content: string) {
 		u1 := info.uv_max[0]
 		v1 := info.uv_max[1]
 
+		fmt.printf(
+			"Char '%c': size = %v offset = %v xadvance = %f uv_min = %v uv_max = %v\n",
+			r,
+			info.size,
+			info.offset,
+			info.xadvance,
+			info.uv_min,
+			info.uv_max,
+		)
+
+
 		vertices[vertex_index] = linalg.Vector4f32{x0, y0, u0, v0}
 		vertices[vertex_index + 1] = linalg.Vector4f32{x1, y0, u1, v0}
 		vertices[vertex_index + 2] = linalg.Vector4f32{x0, y1, u0, v1}
@@ -296,12 +312,17 @@ text_destroy :: proc(self: ^Text) {
 	}
 }
 
-text_render :: proc(self: ^Text, model: linalg.Matrix4f32, proj: linalg.Matrix4f32, view: linalg.Matrix4f32) {
+text_render :: proc(
+	self: ^Text,
+	model: linalg.Matrix4f32,
+	proj: linalg.Matrix4f32,
+	view: linalg.Matrix4f32,
+) {
 	data := shaders.Text_Vs_Params {
 		model = convert_matrix_to_array(model),
 		color = {0.1, 0.2, 0.2, 1.0},
 		proj  = convert_matrix_to_array(proj),
-    view = convert_matrix_to_array(view)
+		view  = convert_matrix_to_array(view),
 	}
 
 	sg.apply_pipeline(self.pipeline.(sg.Pipeline))
