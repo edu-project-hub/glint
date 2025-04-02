@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "glint:app"
+import "glint:objects"
 import "glint:shaders"
 import sg "sokol:gfx"
 
@@ -17,9 +18,17 @@ Glint_Browser :: struct {
 	vbuf:     sg.Buffer,
 	shd:      sg.Shader,
 	pipeline: sg.Pipeline,
+	font:     objects.Font,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
+	font, err := objects.load_font("../arial.ttf", 16, 1024, 1024, {32, 126})
+	if err != nil {
+		fmt.println(err)
+	}
+
+  self.font = font
+
 	self.vbuf = sg.make_buffer(
 		{type = sg.Buffer_Type.VERTEXBUFFER, data = {ptr = &vertices, size = size_of(vertices)}},
 	)
