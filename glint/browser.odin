@@ -4,6 +4,7 @@ import "core:fmt"
 import "glint:app"
 import "glint:shaders"
 import "glint:text_renderer"
+import dx "sokol:debugtext"
 import sg "sokol:gfx"
 
 // odinfmt: disable
@@ -22,6 +23,11 @@ Glint_Browser :: struct {
 }
 
 prepare :: proc(self: ^Glint_Browser) {
+  dx.setup({
+    fonts = {
+      0 = dx.font_kc853(),
+    },
+  })
 	self.vbuf = sg.make_buffer(
 		{type = sg.Buffer_Type.VERTEXBUFFER, data = {ptr = &vertices, size = size_of(vertices)}},
 	)
@@ -48,6 +54,7 @@ shutdown :: proc(self: ^Glint_Browser) {
 	sg.destroy_pipeline(self.pipeline)
 	sg.destroy_shader(self.shd)
 	sg.destroy_buffer(self.vbuf)
+  dx.shutdown()
 }
 
 handler :: proc(
@@ -60,6 +67,7 @@ handler :: proc(
 		app.exit_loop(Glint_Browser, evl)
 		break
 	case app.EvResizeRequest:
+    dx.canvas(f32(v.dims.x), f32(v.dims.y))
 		app.update_window(&evl.app, v.dims)
 		break
 	}
@@ -68,18 +76,20 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!!", {0, 0})
+  dx.printf("Hello World")
+  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!! DEeeehdpfh apfdh pahdf phaspdfzh 89p", {0, 0})
 
 	bind := sg.Bindings {
 		vertex_buffers = {0 = self.vbuf},
 	}
 
-	sg.apply_pipeline(self.pipeline)
-	sg.apply_bindings(bind)
-	sg.draw(0, 3, 1)
+	//sg.apply_pipeline(self.pipeline)
+	//sg.apply_bindings(bind)
+	//sg.draw(0, 3, 1)
 
   text_renderer.draw(&self.tr)
 
+  dx.draw()
 	return nil
 }
 

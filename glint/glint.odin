@@ -3,7 +3,6 @@ package main
 import "core:fmt"
 import "glint:app"
 import "glint:shaders"
-import dt "sokol:debugtext"
 import sg "sokol:gfx"
 import sgl "sokol:gl"
 import slog "sokol:log"

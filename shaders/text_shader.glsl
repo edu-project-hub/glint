@@ -19,7 +19,7 @@ in vec2 texcoord;
 in vec3 color;
 out vec4 frag_color;
 void main() {
-    frag_color = texture(sampler2D(tex, smp), texcoord) * vec4(color, 1.0);
+  frag_color = texture(sampler2D(tex, smp), texcoord) * vec4(color, 1.0);
 }
 @end
 

@@ -21,8 +21,8 @@ Desc :: struct {
 }
 
 Text_Rendering_State :: struct {
-	fc:       fs.FontContext,
-	renderer: Text_Renderer,
+	fc:       ^fs.FontContext,
+	renderer: ^Text_Renderer,
 	desc:     Desc,
 	inter:    int,
 }
@@ -37,12 +37,14 @@ desc_defaults :: proc(desc: Desc) -> Desc {
 
 setup :: proc(desc: Desc) -> (trs: Text_Rendering_State) {
 	trs.desc = desc_defaults(desc)
-	fs.Init(&trs.fc, trs.desc.atlas.x, trs.desc.atlas.x, .TOPLEFT)
-	trs.inter = fs.AddFont(&trs.fc, "Inter", Inter, false)
-	if !fs.AddFallbackFont(&trs.fc, trs.inter, trs.inter) {
+  trs.fc = new(fs.FontContext)
+	fs.Init(trs.fc, trs.desc.atlas.x, trs.desc.atlas.y, .TOPLEFT)
+	trs.inter = fs.AddFont(trs.fc, "Inter", Inter, false)
+	if !fs.AddFallbackFont(trs.fc, trs.inter, trs.inter) {
 		fmt.println("failed to add fallback font")
 	}
-	trs.renderer = text_renderer_create(&trs.fc, trs.desc.atlas.x, trs.desc.atlas.y)
+	trs.renderer = new(Text_Renderer)
+  text_renderer_init(trs.renderer, trs.fc, trs.desc.atlas.x, trs.desc.atlas.y)
 
 	return
 }
@@ -60,7 +62,7 @@ draw_text :: proc(
 	//x_inc: ^f32 = nil,
 	//y_inc: ^f32 = nil,
 ) {
-	state := fs.__getState(&trs.fc)
+	state := fs.__getState(trs.fc)
 	state^ = fs.State {
 		size    = size, // TODO(robin): * os_get_dpi()
 		blur    = blur,
@@ -75,10 +77,10 @@ draw_text :: proc(
 	//	y_inc^ += lh
 	//}
 
-	for iter := fs.TextIterInit(&trs.fc, pos.x, pos.y, text); true; {
+	for iter := fs.TextIterInit(trs.fc, pos.x, pos.y, text); true; {
 		quad: fs.Quad
-		fs.TextIterNext(&trs.fc, &iter, &quad) or_break
-		text_renderer_draw_quad(&trs.renderer, color, quad)
+		fs.TextIterNext(trs.fc, &iter, &quad) or_break
+		text_renderer_draw_quad(trs.renderer, color, quad)
 	}
 
 	//if x_inc != nil {
@@ -88,13 +90,16 @@ draw_text :: proc(
 }
 
 draw :: proc(trs: ^Text_Rendering_State) {
-	text_renderer_draw(&trs.renderer)
+  text_renderer_update_buffer(trs.renderer)
+	text_renderer_draw(trs.renderer)
 }
 
 shutdown :: proc(trs: Text_Rendering_State) {
 	trs := trs
-	text_renderer_destroy(trs.renderer)
-	fs.Destroy(&trs.fc)
+	text_renderer_destroy(trs.renderer^)
+  free(trs.renderer)
+	fs.Destroy(trs.fc)
+  free(trs.fc)
 }
 
 Vertex :: struct #packed {
@@ -118,9 +123,9 @@ Text_Renderer :: struct {
 	bnd:                sg.Bindings,
 }
 
-text_renderer_create :: proc(fc: ^fs.FontContext, width, height: int) -> (tr: Text_Renderer) {
-	text_renderer_create_texture(&tr, width, height)
+text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, height: int) {
 	tr.fc = fc
+	text_renderer_create_texture(tr, width, height)
 	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE})
 	tr.shd = sg.make_shader(shaders.sfontstash_shader_desc(sg.query_backend()))
 	tr.smp = sg.make_sampler({min_filter = .LINEAR, mag_filter = .LINEAR})
@@ -142,7 +147,6 @@ text_renderer_create :: proc(fc: ^fs.FontContext, width, height: int) -> (tr: Te
 		samplers = {0 = tr.smp},
 		images = {0 = tr.texture},
 	}
-	return
 }
 
 text_renderer_destroy :: proc(tr: Text_Renderer) {
@@ -163,13 +167,9 @@ text_renderer_create_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 			height = c.int(height),
 			pixel_format = .R8,
 			usage = .DYNAMIC,
-			data = sg.Image_Data {
-				subimage = {
-					0 = {0 = {ptr = raw_data(tr.fc.textureData), size = len(tr.fc.textureData)}},
-				},
-			},
 		},
 	)
+  text_renderer_update_texture(tr, width, height)
 }
 
 text_renderer_update_texture :: proc(tr: ^Text_Renderer, width, height: int) {
@@ -181,6 +181,7 @@ text_renderer_update_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 			},
 		},
 	)
+  fmt.println(tr.texture.id, tr.texture.id == sg.INVALID_ID, sg.query_image_state(tr.texture))
 }
 
 // The returned slice is guaranteed to be size long
@@ -217,6 +218,7 @@ text_renderer_update_buffer :: proc(tr: ^Text_Renderer) {
 text_renderer_draw :: proc(tr: ^Text_Renderer) {
 	sg.apply_pipeline(tr.pip)
 	sg.apply_bindings(tr.bnd)
+  //fmt.println("drew", 0, c.int(tr.end_vertex_index), 1)
 	sg.draw(0, c.int(tr.end_vertex_index), 1)
 
 	tr.start_vertex_index = 0
