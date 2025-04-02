@@ -46,6 +46,7 @@ font_create :: proc(
 	f, err := load_font(filepath, font_size, height, width, char_range)
 	if err != nil {
 		font_destroy(&f)
+    //TODO(robaertschi): please explain why err is nil even when load_font returned a error enum 
 		return {}, err
 	}
 
