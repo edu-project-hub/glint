@@ -80,7 +80,7 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 
 	color := linalg.Vector4f32{0.1, 0.2, 0.3, 1.0}
 
-	objects.text_render(&self.text, model, proj, view, color)
+	objects.text_render(&self.text, model, proj, view, color, {120.0, 9.0, 000.0})
 
 	return nil
 }

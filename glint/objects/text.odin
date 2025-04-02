@@ -41,10 +41,12 @@ font_create :: proc(
 	char_range: [2]u32,
 ) -> (
 	Font,
-	union{Text_Error},
+	union {
+		Text_Error,
+	},
 ) {
 	f, err := load_font(filepath, font_size, height, width, char_range)
-  fmt.println(err)
+	fmt.println(err)
 	if err != nil {
 		font_destroy(&f)
 		return {}, err
@@ -60,11 +62,13 @@ load_font :: proc(
 	filepath: string,
 	font_size: f32,
 	height, width: int,
-  //TODO: support mulitple ranges
+	//TODO: support mulitple ranges
 	char_range: [2]u32,
 ) -> (
 	Font,
-	union{Text_Error},
+	union {
+		Text_Error,
+	},
 ) {
 	font: Font
 
@@ -205,85 +209,22 @@ Text :: struct {
 }
 
 text_create :: proc(font: ^Font) -> Text {
-	return {font = font, uv_br = 0, uv_tl = 0, vbo = nil, pipeline = nil, bind = nil}
-}
-
-text_set :: proc(self: ^Text, content: string) {
-	switch v in self.vbo {
-	case sg.Buffer:
-		sg.destroy_buffer(v)
+	self := Text {
+		font     = font,
+		uv_br    = 0,
+		uv_tl    = 0,
+		vbo      = nil,
+		pipeline = nil,
+		bind     = nil,
 	}
 
-	num_chars := len(content)
-	totalVerts := num_chars * 6
-	vertices := make([]linalg.Vector4f32, totalVerts)
-
-	max_ascent := f32(0)
-	for r in content {
-		char_idx := int(r)
-		if char_idx < 0 || char_idx >= 128 {
-			continue
-		}
-		info := self.font.chars[char_idx]
-		ascent := -info.offset[1]
-		max_ascent = max(max_ascent, ascent)
-	}
-
-	pen_x, pen_y: f32 = 0, max_ascent
-	vertex_index := 0
-
-	for r in content {
-		char_idx := int(r)
-    //TODO: check  if this is needed or can be changed
-		if char_idx < 0 || char_idx >= 128 {
-			continue
-		}
-
-		info := self.font.chars[char_idx]
-
-		x0 := pen_x + info.offset[0]
-		y0 := pen_y + info.offset[1]
-		x1 := x0 + info.size[0]
-		y1 := y0 + info.size[1]
-
-		u0 := info.uv_min[0]
-		v0 := info.uv_min[1]
-		u1 := info.uv_max[0]
-		v1 := info.uv_max[1]
-
-		vertices[vertex_index] = linalg.Vector4f32{x0, y0, u0, v0}
-		vertices[vertex_index + 1] = linalg.Vector4f32{x1, y0, u1, v0}
-		vertices[vertex_index + 2] = linalg.Vector4f32{x0, y1, u0, v1}
-		vertices[vertex_index + 3] = linalg.Vector4f32{x0, y1, u0, v1}
-		vertices[vertex_index + 4] = linalg.Vector4f32{x1, y0, u1, v0}
-		vertices[vertex_index + 5] = linalg.Vector4f32{x1, y1, u1, v1}
-
-		vertex_index += 6
-		pen_x += info.xadvance
-	}
-
-	self.uv_tl = 0
-	self.uv_br = u32(totalVerts)
-
-	vb_desc: sg.Buffer_Desc = sg.Buffer_Desc {
-		size = c.size_t(totalVerts * size_of(linalg.Vector4f32)),
-		type = .VERTEXBUFFER,
-		usage = .IMMUTABLE,
-		data = sg.Range{ptr = &vertices[0], size = uint(totalVerts * size_of(linalg.Vector4f32))},
-	}
-	self.vbo = sg.make_buffer(vb_desc)
-
-	self.bind = sg.Bindings {
-		vertex_buffers = {0 = self.vbo.(sg.Buffer)},
-		images = {shaders.IMG_tex = self.font.atlas},
-		samplers = {shaders.SMP_tex_sampler = self.font.text_sampler},
-	}
+	// pipeline only needs to be constructed once not per text set or render call
 	self.pipeline = sg.make_pipeline(
 		{
 			shader = self.font.text_shader,
 			layout = {
 				attrs = {
-					shaders.ATTR_text_position = {format = .FLOAT2},
+					shaders.ATTR_text_position = {format = .FLOAT3},
 					shaders.ATTR_text_texcoord = {format = .FLOAT2},
 				},
 			},
@@ -301,8 +242,88 @@ text_set :: proc(self: ^Text, content: string) {
 			},
 		},
 	)
+
+	return self
 }
 
+//support for y-index
+@(private)
+Text_Vert :: [5]f32
+
+text_set :: proc(self: ^Text, content: string) {
+	switch v in self.vbo {
+	case sg.Buffer:
+		sg.destroy_buffer(v)
+	}
+
+	num_chars := len(content)
+	totalVerts := num_chars * 6
+	vertices := make([]Text_Vert, totalVerts)
+
+	max_ascent := f32(0)
+	for r in content {
+		char_idx := int(r)
+		if char_idx < 0 || char_idx >= 128 {
+			continue
+		}
+		info := self.font.chars[char_idx]
+		ascent := -info.offset[1]
+		max_ascent = max(max_ascent, ascent)
+	}
+
+	pen_x, pen_y: f32 = 0, max_ascent
+	vertex_index := 0
+
+	for r in content {
+		char_idx := int(r)
+		//TODO: check  if this is needed or can be changed
+		if char_idx < 0 || char_idx >= 128 {
+			continue
+		}
+
+		info := self.font.chars[char_idx]
+
+		x0 := pen_x + info.offset[0]
+		y0 := pen_y + info.offset[1]
+		x1 := x0 + info.size[0]
+		y1 := y0 + info.size[1]
+
+		u0 := info.uv_min[0]
+		v0 := info.uv_min[1]
+		u1 := info.uv_max[0]
+		v1 := info.uv_max[1]
+
+		vertices[vertex_index] = Text_Vert{x0, y0, 1.0, u0, v0}
+		vertices[vertex_index + 1] = Text_Vert{x1, y0, 1.0, u1, v0}
+		vertices[vertex_index + 2] = Text_Vert{x0, y1, 1.0, u0, v1}
+		vertices[vertex_index + 3] = Text_Vert{x0, y1, 1.0, u0, v1}
+		vertices[vertex_index + 4] = Text_Vert{x1, y0, 1.0, u1, v0}
+		vertices[vertex_index + 5] = Text_Vert{x1, y1, 1.0, u1, v1}
+
+		vertex_index += 6
+		pen_x += info.xadvance
+	}
+
+	self.uv_tl = 0
+	self.uv_br = u32(totalVerts)
+
+	vb_desc: sg.Buffer_Desc = sg.Buffer_Desc {
+		size = c.size_t(totalVerts * size_of(Text_Vert)),
+		type = .VERTEXBUFFER,
+		usage = .IMMUTABLE,
+		data = sg.Range{ptr = &vertices[0], size = uint(totalVerts * size_of(Text_Vert))},
+	}
+	self.vbo = sg.make_buffer(vb_desc)
+
+	self.bind = sg.Bindings {
+		vertex_buffers = {0 = self.vbo.(sg.Buffer)},
+		images = {shaders.IMG_tex = self.font.atlas},
+		samplers = {shaders.SMP_tex_sampler = self.font.text_sampler},
+	}
+}
+
+@(private)
+// TODO: Put this function to a more usable place
 convert_matrix_to_array :: proc(m: matrix[4, 4]f32) -> [4][4]f32 {
 	a: [4][4]f32
 	for i in 0 ..< 4 {
@@ -331,9 +352,13 @@ text_render :: proc(
 	proj: linalg.Matrix4f32,
 	view: linalg.Matrix4f32,
 	color: linalg.Vector4f32,
+	pos: linalg.Vector3f32,
 ) {
+
+	translated_model := model * linalg.matrix4_translate_f32(pos)
+
 	data := shaders.Text_Vs_Params {
-		model = convert_matrix_to_array(model),
+		model = convert_matrix_to_array(translated_model),
 		color = color,
 		proj  = convert_matrix_to_array(proj),
 		view  = convert_matrix_to_array(view),

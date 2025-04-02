@@ -1,9 +1,10 @@
 @ctype mat4 [4][4]f32
 @ctype vec2 [2]f32
+@ctype vec3 [3]f32
 @ctype vec4 [4]f32
 
 @vs vs_text
-in vec2 position;
+in vec3 position;
 in vec2 texcoord;
 
 layout(binding=0) uniform text_vs_params {
@@ -17,7 +18,7 @@ out vec2 uv;
 out vec4 text_color;
 
 void main() {
-    gl_Position = proj * view * model * vec4(position, 0.0, 1.0);
+    gl_Position = proj * view * model * vec4(position, 1.0);
     uv = texcoord;
     text_color = color;
 }
