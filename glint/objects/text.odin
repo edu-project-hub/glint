@@ -60,6 +60,7 @@ load_font :: proc(
 	filepath: string,
 	font_size: f32,
 	height, width: int,
+  //TODO: support mulitple ranges
 	char_range: [2]u32,
 ) -> (
 	Font,
@@ -233,6 +234,7 @@ text_set :: proc(self: ^Text, content: string) {
 
 	for r in content {
 		char_idx := int(r)
+    //TODO: check  if this is needed or can be changed
 		if char_idx < 0 || char_idx >= 128 {
 			continue
 		}
