@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:math/linalg"
 import "glint:app"
 import "glint:shaders"
 import "glint:text_renderer"
@@ -20,14 +21,11 @@ Glint_Browser :: struct {
 	shd:      sg.Shader,
 	pipeline: sg.Pipeline,
 	tr:       text_renderer.Text_Rendering_State,
+	inter:    text_renderer.Font_State,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
-  dx.setup({
-    fonts = {
-      0 = dx.font_kc853(),
-    },
-  })
+	dx.setup({fonts = {0 = dx.font_kc853()}})
 	self.vbuf = sg.make_buffer(
 		{type = sg.Buffer_Type.VERTEXBUFFER, data = {ptr = &vertices, size = size_of(vertices)}},
 	)
@@ -46,15 +44,17 @@ prepare :: proc(self: ^Glint_Browser) {
 		},
 	)
 
-  self.tr = text_renderer.setup({})
+	self.tr = text_renderer.setup({})
+	self.inter = text_renderer.fstate_create({})
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
-  text_renderer.shutdown(self.tr)
+	text_renderer.shutdown(self.tr)
+	text_renderer.fstate_destroy(&self.inter)
 	sg.destroy_pipeline(self.pipeline)
 	sg.destroy_shader(self.shd)
 	sg.destroy_buffer(self.vbuf)
-  dx.shutdown()
+	dx.shutdown()
 }
 
 handler :: proc(
@@ -67,7 +67,7 @@ handler :: proc(
 		app.exit_loop(Glint_Browser, evl)
 		break
 	case app.EvResizeRequest:
-    dx.canvas(f32(v.dims.x), f32(v.dims.y))
+		dx.canvas(f32(v.dims.x), f32(v.dims.y))
 		app.update_window(&evl.app, v.dims)
 		break
 	}
@@ -76,8 +76,14 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100}, 23)
-  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 200}, color = {0.7, 0.2, 0.2})
+  text_renderer.fstate_update_if_needed(&self.inter)
+	text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100}, 23)
+	text_renderer.draw_text(
+		&self.tr,
+		"HELLO WORLD PLS WORK!!",
+		{100, 200},
+		color = {0.7, 0.2, 0.2},
+	)
 
 	bind := sg.Bindings {
 		vertex_buffers = {0 = self.vbuf},
@@ -87,10 +93,20 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 	sg.apply_bindings(bind)
 	sg.draw(0, 3, 1)
 
-  w, h := app.get_framebuffer_size(&evl.app)
-  text_renderer.draw(&self.tr, int(w), int(h))
+	w, h := app.get_framebuffer_size(&evl.app)
+	text_renderer.draw(&self.tr, int(w), int(h))
 
-  dx.draw()
+	text_renderer.text_render(
+		&self.inter,
+		"Hallo Robin",
+		{500, 300},
+		48.0,
+		{0.1, 0.2, 0.3, 1.0},
+		linalg.identity_matrix(linalg.Matrix4f32),
+		linalg.matrix_ortho3d_f32(0.0, f32(evl.app.dims.x), f32(evl.app.dims.y), 0.0, -1.0, 1.0),
+	)
+
+	dx.draw()
 	return nil
 }
 
