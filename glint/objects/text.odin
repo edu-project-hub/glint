@@ -207,7 +207,7 @@ text_create :: proc(font: ^Font) -> Text {
 	return {font = font, uv_br = 0, uv_tl = 0, vbo = nil, pipeline = nil, bind = nil}
 }
 
-text_set :: proc(self: ^Text, content: string) {
+text_set :: proc(self: ^Text, content: string, x: f32 = 0, y: f32 = 0) {
 	switch v in self.vbo {
 	case sg.Buffer:
 		sg.destroy_buffer(v)
@@ -217,7 +217,18 @@ text_set :: proc(self: ^Text, content: string) {
 	totalVerts := num_chars * 6
 	vertices := make([]linalg.Vector4f32, totalVerts)
 
-	pen_x, pen_y: f32 = 0.0, 0.0
+	max_ascent := f32(0)
+	for r in content {
+		char_idx := int(r)
+		if char_idx < 0 || char_idx >= 128 {
+			continue
+		}
+		info := self.font.chars[char_idx]
+		ascent := -info.offset[1]
+		max_ascent = max(max_ascent, ascent)
+	}
+
+	pen_x, pen_y: f32 = x, y + max_ascent
 	vertex_index := 0
 
 	for r in content {
@@ -237,17 +248,6 @@ text_set :: proc(self: ^Text, content: string) {
 		v0 := info.uv_min[1]
 		u1 := info.uv_max[0]
 		v1 := info.uv_max[1]
-
-		fmt.printf(
-			"Char '%c': size = %v offset = %v xadvance = %f uv_min = %v uv_max = %v\n",
-			r,
-			info.size,
-			info.offset,
-			info.xadvance,
-			info.uv_min,
-			info.uv_max,
-		)
-
 
 		vertices[vertex_index] = linalg.Vector4f32{x0, y0, u0, v0}
 		vertices[vertex_index + 1] = linalg.Vector4f32{x1, y0, u1, v0}
@@ -285,6 +285,18 @@ text_set :: proc(self: ^Text, content: string) {
 					shaders.ATTR_text_texcoord = {format = .FLOAT2},
 				},
 			},
+			color_count = 1,
+			colors = {
+				0 = {
+					blend = {
+						enabled = true,
+						src_factor_rgb = .SRC_ALPHA,
+						dst_factor_rgb = .ONE_MINUS_SRC_ALPHA,
+						src_factor_alpha = .SRC_ALPHA,
+						dst_factor_alpha = .ONE_MINUS_SRC_ALPHA,
+					},
+				},
+			},
 		},
 	)
 }
@@ -293,12 +305,11 @@ convert_matrix_to_array :: proc(m: matrix[4, 4]f32) -> [4][4]f32 {
 	a: [4][4]f32
 	for i in 0 ..< 4 {
 		for j in 0 ..< 4 {
-			a[j][i] = m[i, j] 
+			a[j][i] = m[i, j]
 		}
 	}
 	return a
 }
-
 
 text_destroy :: proc(self: ^Text) {
 	switch v in self.vbo {
@@ -317,10 +328,11 @@ text_render :: proc(
 	model: linalg.Matrix4f32,
 	proj: linalg.Matrix4f32,
 	view: linalg.Matrix4f32,
+	color: linalg.Vector4f32,
 ) {
 	data := shaders.Text_Vs_Params {
 		model = convert_matrix_to_array(model),
-		color = {0.1, 0.2, 0.2, 1.0},
+		color = color,
 		proj  = convert_matrix_to_array(proj),
 		view  = convert_matrix_to_array(view),
 	}

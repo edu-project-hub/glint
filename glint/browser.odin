@@ -21,7 +21,7 @@ Glint_Browser :: struct {
 }
 
 prepare :: proc(self: ^Glint_Browser) {
-	font, err := objects.font_create("arial.ttf", 48.0, 512, 512, {32, 127})
+	font, err := objects.font_create("arial.ttf", 32.0, 512, 512, {32, 127})
 	if err != nil {
 		fmt.println(err)
 	}
@@ -40,7 +40,7 @@ prepare :: proc(self: ^Glint_Browser) {
 
 
 	self.text = text
-	objects.text_set(&self.text, "FUCK")
+	objects.text_set(&self.text, "FuCk")
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
@@ -78,7 +78,9 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 		1.0,
 	)
 
-	objects.text_render(&self.text, model, proj, view)
+	color := linalg.Vector4f32{0.1, 0.2, 0.3, 1.0}
+
+	objects.text_render(&self.text, model, proj, view, color)
 
 	return nil
 }
