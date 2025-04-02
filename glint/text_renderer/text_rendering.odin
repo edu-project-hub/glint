@@ -116,57 +116,166 @@ fstate_destroy :: proc(self: ^Font_State) {
 // yes this example produces a new VBO for every text
 // thats why I will do a second implementation where the text
 // is precomputing requiring only one *immutable* vbo
-text_render :: proc(
+//text_render :: proc(
+//	font: ^Font_State,
+//	content: string,
+//	pos: linalg.Vector2f32,
+//	size: f32,
+//	color: linalg.Vector4f32 = {1.0, 1.0, 1.0, 1.0},
+//	model: linalg.Matrix4f32,
+//	proj: linalg.Matrix4f32,
+//) {
+//	num_elements := len(content) * 6
+//	vbo_raw := make([]TextVec, num_elements)
+//	defer delete(vbo_raw)
+//
+//	pos := pos
+//	pos.x = math.round(pos.x)
+//	pos.y = math.round(pos.y)
+//
+//	state := fs.__getState(font.fc)
+//	state^ = fs.State {
+//		size    = size,
+//		blur    = 0.0,
+//		spacing = 0.0,
+//		font    = font.inter,
+//		ah      = .LEFT,
+//		av      = .BASELINE,
+//	}
+//
+//	glyph_i := 0
+//
+//	for iter := fs.TextIterInit(font.fc, pos.x, pos.y, content); true; {
+//		quad: fs.Quad
+//		fs.TextIterNext(font.fc, &iter, &quad) or_break
+//		base := glyph_i * 6
+//		vbo_raw[base + 0] = TextVec{quad.x0, quad.y0, 1.0, quad.s0, quad.t0}
+//		vbo_raw[base + 1] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
+//		vbo_raw[base + 2] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
+//		vbo_raw[base + 3] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
+//		vbo_raw[base + 4] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
+//		vbo_raw[base + 5] = TextVec{quad.x1, quad.y1, 1.0, quad.s1, quad.t1}
+//
+//		glyph_i += 1
+//	}
+//
+//	buf := sg.make_buffer(
+//		{
+//			type = .VERTEXBUFFER,
+//			data = {ptr = &vbo_raw[0], size = uint(size_of(TextVec) * num_elements)},
+//		},
+//	)
+//	defer sg.destroy_buffer(buf)
+//
+//	params := shaders.Text_Vs_Params {
+//		model  = model,
+//		proj   = proj,
+//		color0 = color,
+//	}
+//
+//	binding := sg.Bindings {
+//		vertex_buffers = {0 = buf},
+//		samplers = {shaders.SMP_text_smp = font.sampler},
+//		images = {shaders.IMG_text_tex = font.atlas},
+//	}
+//
+//	sg.apply_pipeline(font.pip)
+//	sg.apply_bindings(binding)
+//	sg.apply_uniforms(
+//		shaders.UB_text_vs_params,
+//		{ptr = &params, size = size_of(shaders.Text_Vs_Params)},
+//	)
+//
+//	sg.draw(0, c.int(num_elements), 1)
+//}
+
+Text :: struct {
+	font:         ^Font_State,
+	content:      string,
+	pos:          linalg.Vector2f32,
+	size:         f32,
+	num_vertices: int,
+	buffer:       sg.Buffer,
+}
+
+text_create :: proc(
 	font: ^Font_State,
 	content: string,
 	pos: linalg.Vector2f32,
 	size: f32,
-	color: linalg.Vector4f32 = {1.0, 1.0, 1.0, 1.0},
-	model: linalg.Matrix4f32,
-	proj: linalg.Matrix4f32,
-) {
-	num_elements := len(content) * 6
-	vbo_raw := make([]TextVec, num_elements)
-	defer delete(vbo_raw)
-
-	pos := pos
-	pos.x = math.round(pos.x)
-	pos.y = math.round(pos.y)
-
-	state := fs.__getState(font.fc)
-	state^ = fs.State {
+) -> Text {
+	text := Text {
+		font    = font,
+		content = content,
+		pos     = pos,
 		size    = size,
+	}
+
+	text_update_buffer(&text) // initial VBO build
+	return text
+}
+
+text_update_buffer :: proc(text: ^Text) {
+	fs_state := fs.__getState(text.font.fc)
+	fs_state^ = fs.State {
+		size    = text.size,
 		blur    = 0.0,
 		spacing = 0.0,
-		font    = font.inter,
+		font    = text.font.inter,
 		ah      = .LEFT,
 		av      = .BASELINE,
 	}
 
-	glyph_i := 0
+	num_elements := len(text.content) * 6
+	vbo_raw := make([]TextVec, num_elements)
+	defer delete(vbo_raw)
 
-	for iter := fs.TextIterInit(font.fc, pos.x, pos.y, content); true; {
+	pos := text.pos
+	pos.x = math.round(pos.x)
+	pos.y = math.round(pos.y)
+
+	glyph_i := 0
+	for iter := fs.TextIterInit(text.font.fc, pos.x, pos.y, text.content); true; {
 		quad: fs.Quad
-		fs.TextIterNext(font.fc, &iter, &quad) or_break
+		fs.TextIterNext(text.font.fc, &iter, &quad) or_break
 		base := glyph_i * 6
-		vbo_raw[base + 0] = TextVec{quad.x0, quad.y0, 1.0, quad.s0, quad.t0}
-		vbo_raw[base + 1] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
-		vbo_raw[base + 2] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
-		vbo_raw[base + 3] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
-		vbo_raw[base + 4] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
-		vbo_raw[base + 5] = TextVec{quad.x1, quad.y1, 1.0, quad.s1, quad.t1}
+
+		dx0 := quad.x0 - text.pos.x
+		dy0 := quad.y0 - text.pos.y
+		dx1 := quad.x1 - text.pos.x
+		dy1 := quad.y1 - text.pos.y
+
+
+		vbo_raw[base + 0] = TextVec{dx0, dy0, 0.0, quad.s0, quad.t0}
+		vbo_raw[base + 1] = TextVec{dx1, dy0, 0.0, quad.s1, quad.t0}
+		vbo_raw[base + 2] = TextVec{dx0, dy1, 0.0, quad.s0, quad.t1}
+		vbo_raw[base + 3] = TextVec{dx1, dy0, 0.0, quad.s1, quad.t0}
+		vbo_raw[base + 4] = TextVec{dx0, dy1, 0.0, quad.s0, quad.t1}
+		vbo_raw[base + 5] = TextVec{dx1, dy1, 0.0, quad.s1, quad.t1}
 
 		glyph_i += 1
 	}
 
-	buf := sg.make_buffer(
+	if text.buffer.id != sg.INVALID_ID {
+		sg.destroy_buffer(text.buffer)
+	}
+
+	text.buffer = sg.make_buffer(
 		{
 			type = .VERTEXBUFFER,
-			data = {ptr = &vbo_raw[0], size = uint(size_of(TextVec) * num_elements)},
+			data = {ptr = &vbo_raw[0], size = uint(size_of(TextVec) * glyph_i * 6)},
 		},
 	)
-	defer sg.destroy_buffer(buf)
 
+	text.num_vertices = glyph_i * 6
+}
+
+text_render :: proc(
+	text: ^Text,
+	model: linalg.Matrix4f32,
+	proj: linalg.Matrix4f32,
+	color: linalg.Vector4f32,
+) {
 	params := shaders.Text_Vs_Params {
 		model  = model,
 		proj   = proj,
@@ -174,17 +283,13 @@ text_render :: proc(
 	}
 
 	binding := sg.Bindings {
-		vertex_buffers = {0 = buf},
-		samplers = {shaders.SMP_text_smp = font.sampler},
-		images = {shaders.IMG_text_tex = font.atlas},
+		vertex_buffers = {0 = text.buffer},
+		samplers = {shaders.SMP_text_smp = text.font.sampler},
+		images = {shaders.IMG_text_tex = text.font.atlas},
 	}
 
-	sg.apply_pipeline(font.pip)
+	sg.apply_pipeline(text.font.pip)
 	sg.apply_bindings(binding)
-	sg.apply_uniforms(
-		shaders.UB_text_vs_params,
-		{ptr = &params, size = size_of(shaders.Text_Vs_Params)},
-	)
-
-	sg.draw(0, c.int(num_elements), 1)
+	sg.apply_uniforms(shaders.UB_text_vs_params, {ptr = &params, size = size_of(params)})
+	sg.draw(0, c.int(text.num_vertices), 1)
 }

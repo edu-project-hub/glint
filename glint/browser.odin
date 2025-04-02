@@ -22,6 +22,7 @@ Glint_Browser :: struct {
 	pipeline: sg.Pipeline,
 	tr:       text_renderer.Text_Rendering_State,
 	inter:    text_renderer.Font_State,
+	hello:    text_renderer.Text,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
@@ -46,6 +47,7 @@ prepare :: proc(self: ^Glint_Browser) {
 
 	self.tr = text_renderer.setup({})
 	self.inter = text_renderer.fstate_create({})
+	self.hello = text_renderer.text_create(&self.inter, "hello robin", {200, 300}, 48)
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
@@ -76,7 +78,7 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-  text_renderer.fstate_update_if_needed(&self.inter)
+	text_renderer.fstate_update_if_needed(&self.inter)
 	text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100}, 23)
 	text_renderer.draw_text(
 		&self.tr,
@@ -96,15 +98,15 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 	w, h := app.get_framebuffer_size(&evl.app)
 	text_renderer.draw(&self.tr, int(w), int(h))
 
-	text_renderer.text_render(
-		&self.inter,
-		"Hallo Robin",
-		{500, 300},
-		48.0,
-		{0.1, 0.2, 0.3, 1.0},
-		linalg.identity_matrix(linalg.Matrix4f32),
-		linalg.matrix_ortho3d_f32(0.0, f32(evl.app.dims.x), f32(evl.app.dims.y), 0.0, -1.0, 1.0),
-	)
+	model := linalg.identity_matrix(linalg.Matrix4f32)
+	proj := linalg.matrix_ortho3d_f32(0, f32(evl.app.dims.x), f32(evl.app.dims.y), 0, -1, 1)
+
+	model = linalg.mul(model, linalg.matrix4_translate_f32({400, 300, 0}))
+	text_renderer.text_render(&self.hello, model, proj, {0.2, 0.3, 0.2, 1.0})
+	model = linalg.mul(model, linalg.matrix4_translate_f32({69, 128.0, 0}))
+	text_renderer.text_render(&self.hello, model, proj, {0.6, 0.1, 0.7, 1.0})
+	model = linalg.mul(model, linalg.matrix4_translate_f32({128, 40.0, 0}))
+	text_renderer.text_render(&self.hello, model, proj, {0.9, 0.7, 0.5, 1.0})
 
 	dx.draw()
 	return nil
