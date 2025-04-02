@@ -198,7 +198,7 @@ Text :: struct {
 	bind:     Maybe(sg.Bindings),
 }
 
-text_create :: proc(font: ^Font, projection: linalg.Matrix4f32) -> Text {
+text_create :: proc(font: ^Font) -> Text {
 	return {font = font, uv_br = 0, uv_tl = 0, vbo = nil, pipeline = nil, bind = nil}
 }
 
@@ -296,10 +296,12 @@ text_destroy :: proc(self: ^Text) {
 	}
 }
 
-text_render :: proc(self: ^Text, model: linalg.Matrix4f32) {
+text_render :: proc(self: ^Text, model: linalg.Matrix4f32, proj: linalg.Matrix4f32, view: linalg.Matrix4f32) {
 	data := shaders.Text_Vs_Params {
 		model = convert_matrix_to_array(model),
 		color = {0.1, 0.2, 0.2, 1.0},
+		proj  = convert_matrix_to_array(proj),
+    view = convert_matrix_to_array(view)
 	}
 
 	sg.apply_pipeline(self.pipeline.(sg.Pipeline))

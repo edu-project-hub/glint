@@ -34,18 +34,9 @@ prepare :: proc(self: ^Glint_Browser) {
 	t := 1.0 // Top
 	n := 0.1 // Near
 	f := 100.0 // Far
-	
- // odinfmt: disable
-	ortho := linalg.Matrix4f32{
-    f32(2.0 / (r - l)), 0.0,             0.0,            f32( -(r + l) / (r - l)),
-    0.0,            f32(2.0 / (t - b)),  0.0,             f32(-(t + b) / (t - b)),
-    0.0,            0.0,            f32(-2.0 / (f - n)),  f32(-(f + n) / (f - n)),
-    0.0,            0.0,             0.0,             1.0,
-  }
- // odinfmt: enable
 
 	self.font = font
-	text := objects.text_create(&self.font, ortho)
+	text := objects.text_create(&self.font)
 
 
 	self.text = text
@@ -76,16 +67,18 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-  //odinfmt: disable
-  model := linalg.Matrix4f32 {
-    f32(1), f32(0), f32(0), f32(0),
-    f32(0), f32(1), f32(0), f32(0),
-    f32(0), f32(0), f32(1), f32(0),
-    f32(0), f32(0), f32(0), f32(1),
-  };
-  //odinfmt: enable
+	view := linalg.identity_matrix(linalg.Matrix4f32)
+	model := linalg.identity_matrix(linalg.Matrix4f32)
+	proj := linalg.matrix_ortho3d_f32(
+		0.0,
+		f32(evl.app.dims.x),
+		f32(evl.app.dims.y),
+		0.0,
+		-1.0,
+		1.0,
+	)
 
-	objects.text_render(&self.text, linalg.identity_matrix(linalg.Matrix4f32))
+	objects.text_render(&self.text, model, proj, view)
 
 	return nil
 }

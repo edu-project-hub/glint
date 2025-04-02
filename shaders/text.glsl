@@ -8,6 +8,8 @@ in vec2 texcoord;
 
 layout(binding=0) uniform text_vs_params {
     mat4 model;
+    mat4 proj;
+    mat4 view;
     vec4 color;
 };
 
@@ -15,7 +17,7 @@ out vec2 uv;
 out vec4 text_color;
 
 void main() {
-    gl_Position = model * vec4(position, 0.0, 1.0);
+    gl_Position = model * proj * view * vec4(position, 0.0, 1.0);
     uv = texcoord;
     text_color = color;
 }
