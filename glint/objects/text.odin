@@ -5,6 +5,7 @@ import "core:math/linalg"
 import "core:os"
 import "core:unicode"
 import "glint:shaders"
+import "core:fmt"
 import sg "sokol:gfx"
 import tt "vendor:stb/truetype"
 
@@ -175,6 +176,8 @@ load_font :: proc(
 	}
 
 	font.atlas = sg.make_image(img_desc)
+  fmt.println("HELLLLOOOO TEST")
+
 	return font, nil
 }
 
@@ -250,6 +253,7 @@ text_set :: proc(self: ^Text, content: string) {
 		data = sg.Range{ptr = &vertices[0], size = uint(totalVerts * size_of(linalg.Vector4f32))},
 	}
 	self.vbo = sg.make_buffer(vb_desc)
+  
 	self.bind = sg.Bindings {
 		vertex_buffers = {0 = self.vbo.(sg.Buffer)},
 		images = {shaders.IMG_tex = self.font.atlas},
