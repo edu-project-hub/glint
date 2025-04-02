@@ -15,10 +15,7 @@ vertices := [?]f32{
 // odinfmt: enable
 
 Glint_Browser :: struct {
-	vbuf:     sg.Buffer,
-	shd:      sg.Shader,
-	pipeline: sg.Pipeline,
-	font:     objects.Font,
+	font: objects.Font,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
@@ -27,31 +24,13 @@ prepare :: proc(self: ^Glint_Browser) {
 		fmt.println(err)
 	}
 
-  self.font = font
+	self.font = font
 
-	self.vbuf = sg.make_buffer(
-		{type = sg.Buffer_Type.VERTEXBUFFER, data = {ptr = &vertices, size = size_of(vertices)}},
-	)
 
-	self.shd = sg.make_shader(shaders.triangle_shader_desc(sg.query_backend()))
-
-	self.pipeline = sg.make_pipeline(
-		{
-			shader = self.shd,
-			layout = {
-				attrs = {
-					shaders.ATTR_triangle_position = {format = .FLOAT3},
-					shaders.ATTR_triangle_color0 = {format = .FLOAT4},
-				},
-			},
-		},
-	)
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
-	sg.destroy_buffer(self.vbuf)
-	sg.destroy_shader(self.shd)
-	sg.destroy_pipeline(self.pipeline)
+
 }
 
 handler :: proc(
@@ -72,13 +51,7 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-	bind := sg.Bindings {
-		vertex_buffers = {0 = self.vbuf},
-	}
 
-	sg.apply_pipeline(self.pipeline)
-	sg.apply_bindings(bind)
-	sg.draw(0, 3, 1)
 
 	return nil
 }
