@@ -76,7 +76,7 @@ handler :: proc(
 }
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
-  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100}, 55)
+  text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 100}, 23)
   text_renderer.draw_text(&self.tr, "HELLO WORLD PLS WORK!!", {100, 200}, color = {0.7, 0.2, 0.2})
 
 	bind := sg.Bindings {

@@ -163,7 +163,7 @@ text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, heigh
 				0 = {
 					blend = {
 						enabled = true,
-						src_factor_rgb = .SRC_ALPHA,
+						src_factor_rgb = .ONE,
 						dst_factor_rgb = .ONE_MINUS_SRC_ALPHA,
 						src_factor_alpha = .ONE,
 						dst_factor_alpha = .ONE_MINUS_SRC_ALPHA,
