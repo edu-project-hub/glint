@@ -47,7 +47,7 @@ prepare :: proc(self: ^Glint_Browser) {
 
 	self.tr = text_renderer.setup({})
 	self.inter = text_renderer.fstate_create({})
-	self.hello = text_renderer.text_create(&self.inter, "hello robin", {200, 300}, 48)
+	self.hello = text_renderer.text_create(&self.inter, "hello robin", {400, 300}, 48)
 }
 
 shutdown :: proc(self: ^Glint_Browser) {
@@ -101,7 +101,7 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 	model := linalg.identity_matrix(linalg.Matrix4f32)
 	proj := linalg.matrix_ortho3d_f32(0, f32(evl.app.dims.x), f32(evl.app.dims.y), 0, -1, 1)
 
-	model = linalg.mul(model, linalg.matrix4_translate_f32({400, 300, 0}))
+	model = linalg.mul(model, linalg.matrix4_translate_f32({30, 20, 0}))
 	text_renderer.text_render(&self.hello, model, proj, {0.2, 0.3, 0.2, 1.0})
 	model = linalg.mul(model, linalg.matrix4_translate_f32({69, 128.0, 0}))
 	text_renderer.text_render(&self.hello, model, proj, {0.6, 0.1, 0.7, 1.0})

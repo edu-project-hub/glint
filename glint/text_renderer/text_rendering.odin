@@ -240,19 +240,13 @@ text_update_buffer :: proc(text: ^Text) {
 		fs.TextIterNext(text.font.fc, &iter, &quad) or_break
 		base := glyph_i * 6
 
-		dx0 := quad.x0 - text.pos.x
-		dy0 := quad.y0 - text.pos.y
-		dx1 := quad.x1 - text.pos.x
-		dy1 := quad.y1 - text.pos.y
 
-
-		vbo_raw[base + 0] = TextVec{dx0, dy0, 0.0, quad.s0, quad.t0}
-		vbo_raw[base + 1] = TextVec{dx1, dy0, 0.0, quad.s1, quad.t0}
-		vbo_raw[base + 2] = TextVec{dx0, dy1, 0.0, quad.s0, quad.t1}
-		vbo_raw[base + 3] = TextVec{dx1, dy0, 0.0, quad.s1, quad.t0}
-		vbo_raw[base + 4] = TextVec{dx0, dy1, 0.0, quad.s0, quad.t1}
-		vbo_raw[base + 5] = TextVec{dx1, dy1, 0.0, quad.s1, quad.t1}
-
+		vbo_raw[base + 0] = TextVec{quad.x0, quad.y0, 1.0, quad.s0, quad.t0}
+		vbo_raw[base + 1] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
+		vbo_raw[base + 2] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
+		vbo_raw[base + 3] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
+		vbo_raw[base + 4] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
+		vbo_raw[base + 5] = TextVec{quad.x1, quad.y1, 1.0, quad.s1, quad.t1}
 		glyph_i += 1
 	}
 
