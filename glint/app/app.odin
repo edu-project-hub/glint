@@ -173,5 +173,5 @@ get_window :: proc(app: ^Glint_App) -> glfw.WindowHandle {
 }
 
 get_framebuffer_size :: proc(app: ^Glint_App) -> (c.int, c.int) {
-  return glfw.GetFramebufferSize(get_window(app))
+	return app.dims.x, app.dims.y
 }
