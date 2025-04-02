@@ -21,13 +21,12 @@ Glint_Browser :: struct {
 }
 
 prepare :: proc(self: ^Glint_Browser) {
-	font, err := objects.font_create("../arial.ttf", 16, 1024, 1024, {32, 126})
+	font, err := objects.font_create("arial.ttf", 16, 1024, 1024, {32, 126})
 	if err != nil {
 		fmt.println(err)
-		panic("lol")
 	}
 
-  fmt.println(font.atlas)
+	fmt.println(font.atlas)
 
 	l := -1.0 // Left
 	r := 1.0 // Right
@@ -86,7 +85,6 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
   };
   //odinfmt: enable
 
-	//objects.text_render(&self.text, 0, 0, model)
 
 	return nil
 }
