@@ -64,9 +64,9 @@ draw_text :: proc(
 	//x_inc: ^f32 = nil,
 	//y_inc: ^f32 = nil,
 ) {
-  pos := pos
-  pos.x = math.round(pos.x)
-  pos.y = math.round(pos.y)
+	pos := pos
+	pos.x = math.round(pos.x)
+	pos.y = math.round(pos.y)
 
 	state := fs.__getState(trs.fc)
 	state^ = fs.State {

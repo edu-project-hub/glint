@@ -212,7 +212,7 @@ text_create :: proc(
 		size    = size,
 	}
 
-	text_update_buffer(&text) 
+	text_update_buffer(&text)
 	return text
 }
 
