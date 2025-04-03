@@ -112,6 +112,7 @@ fstate_destroy :: proc(self: ^Font_State) {
 //This is extremly inefficient 
 //just a PoC (proof-of-concept)
 //precomputing text before the actual render is recommended
+//this is the on-demand renderer
 //
 // yes this example produces a new VBO for every text
 // thats why I will do a second implementation where the text
@@ -211,7 +212,7 @@ text_create :: proc(
 		size    = size,
 	}
 
-	text_update_buffer(&text) // initial VBO build
+	text_update_buffer(&text) 
 	return text
 }
 
