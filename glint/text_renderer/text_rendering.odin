@@ -11,7 +11,10 @@ import fs "vendor:fontstash"
 import "glint:shaders"
 
 @(private)
-TextVec :: [5]f32 // vec3, vec2
+TextVec :: struct #packed {
+  position: linalg.Vector3f32,
+  texcoord0: linalg.Vector2f32,
+}
 
 Font_State :: struct {
 	fc:      ^fs.FontContext,
@@ -242,12 +245,12 @@ text_update_buffer :: proc(text: ^Text) {
 		base := glyph_i * 6
 
 
-		vbo_raw[base + 0] = TextVec{quad.x0, quad.y0, 1.0, quad.s0, quad.t0}
-		vbo_raw[base + 1] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
-		vbo_raw[base + 2] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
-		vbo_raw[base + 3] = TextVec{quad.x1, quad.y0, 1.0, quad.s1, quad.t0}
-		vbo_raw[base + 4] = TextVec{quad.x0, quad.y1, 1.0, quad.s0, quad.t1}
-		vbo_raw[base + 5] = TextVec{quad.x1, quad.y1, 1.0, quad.s1, quad.t1}
+		vbo_raw[base + 0] = TextVec{{quad.x0, quad.y0, 1.0}, {quad.s0, quad.t0}}
+		vbo_raw[base + 1] = TextVec{{quad.x1, quad.y0, 1.0}, {quad.s1, quad.t0}}
+		vbo_raw[base + 2] = TextVec{{quad.x0, quad.y1, 1.0}, {quad.s0, quad.t1}}
+		vbo_raw[base + 3] = TextVec{{quad.x1, quad.y0, 1.0}, {quad.s1, quad.t0}}
+		vbo_raw[base + 4] = TextVec{{quad.x0, quad.y1, 1.0}, {quad.s0, quad.t1}}
+		vbo_raw[base + 5] = TextVec{{quad.x1, quad.y1, 1.0}, {quad.s1, quad.t1}}
 		glyph_i += 1
 	}
 
