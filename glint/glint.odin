@@ -4,7 +4,9 @@ import "core:fmt"
 import "glint:app"
 import "glint:shaders"
 import sg "sokol:gfx"
+import sgl "sokol:gl"
 import slog "sokol:log"
+import fs "vendor:fontstash"
 import "vendor:glfw"
 
 main :: proc() {

@@ -5,7 +5,8 @@ import "core:mem"
 import sg "sokol:gfx"
 import slog "sokol:log"
 
-EvCloseRequest :: struct {}
+EvCloseRequest :: struct {
+}
 EvResizeRequest :: struct {
 	dims: [2]i32,
 }
@@ -91,22 +92,26 @@ run_loop :: proc($Ctx: typeid, self: ^Event_Loop(Ctx)) -> Glint_Loop_Err {
 	assert(self.callbacks.handle != nil, "Handle callback must be set")
 	assert(self.callbacks.error != nil, "Error callback must be set")
 
-	if self.callbacks.prepare != nil {
-		self.callbacks.prepare(self.ctx)
-	}
+	self.callbacks.prepare(self.ctx)
+
+	w, h := get_framebuffer_size(&self.app)
+	self.callbacks.handle(self.ctx, self, EvResizeRequest{dims = {w, h}})
 
 	for {
 		if !self.running {
 			break
 		}
 
-		if self.callbacks.render != nil {
+		free_all(context.temp_allocator)
+
+		// Rendering
+		{
 			sg.begin_pass({swapchain = get_swapchain(&self.app)})
+			defer sg.end_pass()
 			self.callbacks.render(self.ctx, self)
-			sg.end_pass()
-			sg.commit()
-			swap_buffers(&self.app)
 		}
+		sg.commit()
+		swap_buffers(&self.app)
 
 		for {
 			if len(self.events) == 0 {

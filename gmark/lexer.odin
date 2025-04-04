@@ -60,12 +60,8 @@ Token :: struct {
 }
 
 token_clone :: proc(t: Token) -> Token {
-  data : Maybe(string) = strings.clone(t.data.(string)) if t.data != nil else nil
-  return {
-    type = t.type,
-    loc = t.loc,
-    data = data,
-  }
+	data: Maybe(string) = strings.clone(t.data.(string)) if t.data != nil else nil
+	return {type = t.type, loc = t.loc, data = data}
 }
 
 Loc :: struct {
@@ -99,24 +95,28 @@ lexer_default_error_callback :: proc(loc: Loc, format: string, args: ..any) {
 	fmt.eprintf("\n")
 }
 
-lexer_create :: proc(input: string, file: string, error_callback := lexer_default_error_callback) -> Lexer {
-  l := Lexer{
-    input = input,
-    file = file,
-    error_callback = error_callback,
-    pos = 0,
-    peek_pos = 0,
-    line = 1 if len(input) > 0 else 0,
-    last_line_pos = 0,
-    errors = 0,
-  }
+lexer_create :: proc(
+	input: string,
+	file: string,
+	error_callback := lexer_default_error_callback,
+) -> Lexer {
+	l := Lexer {
+		input          = input,
+		file           = file,
+		error_callback = error_callback,
+		pos            = 0,
+		peek_pos       = 0,
+		line           = 1 if len(input) > 0 else 0,
+		last_line_pos  = 0,
+		errors         = 0,
+	}
 
 	next_ch(&l)
 	if l.ch == utf8.RUNE_BOM {
 		next_ch(&l)
 	}
 
-  return l
+	return l
 }
 
 @(private = "file")
