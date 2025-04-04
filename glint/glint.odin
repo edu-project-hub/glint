@@ -36,7 +36,7 @@ main :: proc() {
 	if err != nil {
 		#partial switch e in err {
 		case app.User_Err:
-			fmt.println(e.message)
+			fmt.println(e.error)
 		case:
 			fmt.println("Different error type:", err)
 		}
