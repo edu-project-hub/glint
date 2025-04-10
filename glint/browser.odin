@@ -25,16 +25,20 @@ Text_Entity :: struct {
 }
 
 Glint_Browser :: struct {
-	vbuf:        sg.Buffer,
-	shd:         sg.Shader,
-	pipeline:    sg.Pipeline,
-	tr:          text_renderer.Text_Rendering_State,
-	inter:       text_renderer.Font_State,
-	texts:       [3]Text_Entity,
-	window_dims: [2]i32,
+	vbuf:          sg.Buffer,
+	shd:           sg.Shader,
+	pipeline:      sg.Pipeline,
+	tr:            text_renderer.Text_Rendering_State,
+	inter:         text_renderer.Font_State,
+	texts:         [3]Text_Entity,
+	window_dims:   [2]i32,
+	previous_time: f64,
+	frame_count:   int,
 }
 
 prepare :: proc(self: ^Glint_Browser) {
+	self.previous_time = app.get_time()
+
 	dx.setup({fonts = {0 = dx.font_kc853()}})
 	self.vbuf = sg.make_buffer(
 		{type = sg.Buffer_Type.VERTEXBUFFER, data = {ptr = &vertices, size = size_of(vertices)}},
@@ -139,6 +143,15 @@ update_text_positions :: proc(self: ^Glint_Browser) {
 
 render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app.Glint_Loop_Err {
 	text_renderer.fstate_update_if_needed(&self.inter)
+	current_time := app.get_time()
+  self.frame_count += 1
+  
+
+  if current_time - self.previous_time >= 1.0 {
+    fmt.println(self.frame_count)
+    self.frame_count = 0
+    self.previous_time = current_time
+  }
 
 	update_text_positions(self)
 
@@ -151,6 +164,20 @@ render :: proc(self: ^Glint_Browser, evl: ^app.Event_Loop(Glint_Browser)) -> app
 	sg.draw(0, 3, 1)
 
 	w, h := app.get_framebuffer_size(&evl.app)
+
+	for i: i32 = 0; i < h; i += 5 {
+		text_renderer.draw_text(
+			&self.tr,
+			fmt.tprintf(
+				"Hello %d  padhfp apdfh aph dpfah sophdfop ahdp fhaphdf pahknvpoah nponah fadh spofhd pooahs pdhfpdas hdphfd a",
+				i,
+			),
+			{0, cast(f32)i + 10},
+			color = {f32(i) / f32(h), f32(i) / f32(h), f32(i) / f32(h)},
+		)
+	}
+
+
 	text_renderer.draw(&self.tr, int(w), int(h))
 
 	proj := linalg.matrix_ortho3d_f32(0, f32(evl.app.dims.x), f32(evl.app.dims.y), 0, -1, 1)

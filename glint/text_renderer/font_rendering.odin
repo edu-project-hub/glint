@@ -61,8 +61,6 @@ draw_text :: proc(
 	spacing: f32 = 0,
 	align_h: fs.AlignHorizontal = .LEFT,
 	align_v: fs.AlignVertical = .BASELINE,
-	//x_inc: ^f32 = nil,
-	//y_inc: ^f32 = nil,
 ) {
 	pos := pos
 	pos.x = math.round(pos.x)
@@ -78,21 +76,11 @@ draw_text :: proc(
 		av      = align_v,
 	}
 
-	//if y_inc != nil {
-	//	_, _, lh := fs.VerticalMetrics(fc)
-	//	y_inc^ += lh
-	//}
-
 	for iter := fs.TextIterInit(trs.fc, pos.x, pos.y, text); true; {
 		quad: fs.Quad
 		fs.TextIterNext(trs.fc, &iter, &quad) or_break
 		text_renderer_draw_quad(trs.renderer, color, quad)
 	}
-
-	//if x_inc != nil {
-	//	last := sfons.instances[len(sfons.instances) - 1]
-	//	x_inc^ += last.pos_max.x - pos.x
-	//}
 }
 
 draw :: proc(trs: ^Text_Rendering_State, width, height: int) {
@@ -129,23 +117,25 @@ Vertex :: struct #packed {
 BUFFER_SIZE :: 4096
 
 Text_Renderer :: struct {
-	texture:            sg.Image,
-	fc:                 ^fs.FontContext,
-	start_vertex_index: int,
-	end_vertex_index:   int,
-	vertices:           [BUFFER_SIZE]Vertex,
-	buffer:             sg.Buffer,
-	shd:                sg.Shader,
-	smp:                sg.Sampler,
-	pip:                sg.Pipeline,
-	bnd:                sg.Bindings,
-	vs_params:          shaders.Vs_Params,
+	texture:             sg.Image,
+	fc:                  ^fs.FontContext,
+	start_vertex_index:  int,
+	end_vertex_index:    int,
+	vertices:            [dynamic]Vertex,
+	current_buffer_size: c.size_t,
+	buffer:              sg.Buffer,
+	shd:                 sg.Shader,
+	smp:                 sg.Sampler,
+	pip:                 sg.Pipeline,
+	bnd:                 sg.Bindings,
+	vs_params:           shaders.Vs_Params,
 }
 
 text_renderer_init :: proc(tr: ^Text_Renderer, fc: ^fs.FontContext, width, height: int) {
 	tr.fc = fc
 	text_renderer_create_texture(tr, width, height)
 	tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = BUFFER_SIZE * size_of(Vertex)})
+  tr.current_buffer_size = BUFFER_SIZE
 	tr.shd = sg.make_shader(shaders.sfontstash_shader_desc(sg.query_backend()))
 	tr.smp = sg.make_sampler({min_filter = .NEAREST, mag_filter = .NEAREST})
 
@@ -206,7 +196,6 @@ text_renderer_create_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 }
 
 text_renderer_update_texture :: proc(tr: ^Text_Renderer, width, height: int) {
-	fmt.println("rebuilding atlas")
 	sg.update_image(
 		tr.texture,
 		{
@@ -220,18 +209,20 @@ text_renderer_update_texture :: proc(tr: ^Text_Renderer, width, height: int) {
 			},
 		},
 	)
-	fmt.println(tr.texture.id, tr.texture.id == sg.INVALID_ID, sg.query_image_state(tr.texture))
+	// fmt.println(tr.texture.id, tr.texture.id == sg.INVALID_ID, sg.query_image_state(tr.texture))
 }
 
 // The returned slice is guaranteed to be size long
 text_renderer_push_vertices :: proc(tr: ^Text_Renderer, size: int) -> []Vertex {
-	tr.start_vertex_index = tr.end_vertex_index
-	tr.end_vertex_index += size
+	tr.start_vertex_index = len(tr.vertices)
+	resize_dynamic_array(&tr.vertices, len(tr.vertices) + size)
+	tr.end_vertex_index = len(tr.vertices)
 	return tr.vertices[tr.start_vertex_index:tr.end_vertex_index]
 }
 
 text_renderer_draw_quad :: proc(tr: ^Text_Renderer, color: [3]f32, q: fs.Quad) {
-	v := text_renderer_push_vertices(tr, 6)
+	// v := text_renderer_push_vertices(tr, 6)
+  v := [6]Vertex{}
 	v[0].texcoord = {q.s0, q.t0}
 	v[1].texcoord = {q.s1, q.t0}
 	v[2].texcoord = {q.s0, q.t1}
@@ -248,19 +239,31 @@ text_renderer_draw_quad :: proc(tr: ^Text_Renderer, color: [3]f32, q: fs.Quad) {
 	for &v in &v {
 		v.color = color
 	}
+
+  append(&tr.vertices, ..v[:])
 }
 
 text_renderer_update_buffer :: proc(tr: ^Text_Renderer) {
-	sg.update_buffer(tr.buffer, {size = len(tr.vertices) * size_of(Vertex), ptr = &tr.vertices})
+  if tr.current_buffer_size < len(tr.vertices) {
+    sg.destroy_buffer(tr.buffer)
+    for tr.current_buffer_size < len(tr.vertices) {
+      tr.current_buffer_size *= 2
+    }
+    tr.buffer = sg.make_buffer({usage = .DYNAMIC, size = tr.current_buffer_size * size_of(Vertex)})
+    tr.bnd.vertex_buffers[0] = tr.buffer
+  }
+
+	sg.update_buffer(tr.buffer, {size = len(tr.vertices) * size_of(Vertex), ptr = raw_data(tr.vertices)})
 }
 
 text_renderer_draw :: proc(tr: ^Text_Renderer) {
 	sg.apply_pipeline(tr.pip)
 	sg.apply_bindings(tr.bnd)
 	sg.apply_uniforms(shaders.UB_vs_params, {ptr = &tr.vs_params, size = size_of(tr.vs_params)})
-	//fmt.println("drew", 0, c.int(tr.end_vertex_index), 1)
-	sg.draw(0, c.int(tr.end_vertex_index), 1)
+	// fmt.println("drew", 0, c.int(tr.end_vertex_index), 1)
+	sg.draw(0, c.int(len(tr.vertices)), 1)
 
 	tr.start_vertex_index = 0
 	tr.end_vertex_index = 0
+	clear(&tr.vertices)
 }
