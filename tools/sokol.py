@@ -90,6 +90,9 @@ def main():
         ("sokol_gfx", f"gfx/sokol_gfx_linux_x64_{BACKEND[1]}", BACKEND[0]),
         ("sokol_app", f"app/sokol_app_linux_x64_{BACKEND[1]}", BACKEND[0]),
         ("sokol_log", f"log/sokol_log_linux_x64_{BACKEND[1]}", BACKEND[0]),
+        ("sokol_gl", f"gl/sokol_gl_linux_x64_{BACKEND[1]}", BACKEND[0]),
+        ("sokol_debugtext",
+         f"debugtext/sokol_debugtext_linux_x64_{BACKEND[1]}", BACKEND[0]),
         # insert all libs as we need them
     ]
 

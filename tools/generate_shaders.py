@@ -8,6 +8,9 @@ ROOT = pathlib.Path(os.getcwd())
 if ROOT.name == "tools":
     ROOT = ROOT.parent
 
+# Fixes some issues with different command lines
+ROOT = ROOT.relative_to(pathlib.Path(os.getcwd()))
+
 SHADERS_DIR = ROOT / "shaders"
 GENERATED_SHADERS_DIR = ROOT / "glint/shaders"
 SOKOL_SHDC = ROOT / "vendor/sokol-tools-bin/bin/linux/sokol-shdc"

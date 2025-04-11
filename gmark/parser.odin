@@ -84,13 +84,13 @@ Element :: union {
 }
 
 delete_element :: proc(e: Element, allocator := context.allocator) {
-  context.allocator = allocator
+	context.allocator = allocator
 	switch e in e {
 	case Text_Element:
 		destroy_token(e.t)
 	case Block_Element:
 		destroy_token(e.t)
-    delete(e.children)
+		delete(e.children)
 	case Error_Element:
 		destroy_token(e.t)
 	}
@@ -144,7 +144,7 @@ parse_element :: proc(p: ^Parser) -> Element_Index {
 	}
 
 	append(&p.elements, element)
-  return len(p.elements)-1
+	return len(p.elements) - 1
 }
 
 @(private = "file")
@@ -153,8 +153,8 @@ parse_block :: proc(p: ^Parser) -> Element {
 		return error(p, p.cur_token, "parse_block was called on a wrong token")
 	}
 	expect_peek(p, .Identifier) or_return
-  
-  clone := token_clone(p.cur_token)
+
+	clone := token_clone(p.cur_token)
 	block_element := Block_Element {
 		t    = clone,
 		name = clone.data.(string),
@@ -188,35 +188,35 @@ expect_peek :: proc(p: ^Parser, expected: Token_Type) -> Element {
 	return nil
 }
 
-@(private="file")
+@(private = "file")
 element_equal :: proc(first: Element, second: Element) -> bool {
-  if first == nil {
-    return second == nil
-  }
+	if first == nil {
+		return second == nil
+	}
 
-  switch first in first {
-  case Text_Element:
-    text := second.(Text_Element) or_return
-    return first.content == text.content
-  case Block_Element:
-    block := second.(Block_Element) or_return
-    (len(block.children) == len(first.children)) or_return
-    for child, i in block.children {
-      (child == first.children[i]) or_return
-    }
-    return block.name == first.name
-  case Error_Element:
-    return true
-  }
-  unreachable()
+	switch first in first {
+	case Text_Element:
+		text := second.(Text_Element) or_return
+		return first.content == text.content
+	case Block_Element:
+		block := second.(Block_Element) or_return
+		(len(block.children) == len(first.children)) or_return
+		for child, i in block.children {
+			(child == first.children[i]) or_return
+		}
+		return block.name == first.name
+	case Error_Element:
+		return true
+	}
+	unreachable()
 }
 
 delete_document :: proc(document: Document) {
-		for elem in document.elements {
-			delete_element(elem, document.allocator)
-		}
-		delete(document.elements, document.allocator)
-		delete(document.root_elements, document.allocator)
+	for elem in document.elements {
+		delete_element(elem, document.allocator)
+	}
+	delete(document.elements, document.allocator)
+	delete(document.root_elements, document.allocator)
 }
 
 @(private = "file")
@@ -227,7 +227,7 @@ parser_test :: proc(t: ^testing.T, input: string, expected: Document) {
 	document := parse_document(&p)
 	defer delete_document(document)
 
-  testing.expect_value(t, p.errors, 0)
+	testing.expect_value(t, p.errors, 0)
 
 	if !testing.expectf(
 		t,
@@ -253,7 +253,7 @@ parser_test :: proc(t: ^testing.T, input: string, expected: Document) {
 			t,
 			element_equal(expected.elements[i], e),
 			"index: %v\n%#v == %#v",
-      i,
+			i,
 			expected.elements[i],
 			e,
 		)

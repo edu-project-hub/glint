@@ -171,3 +171,11 @@ destroy_app :: proc(app: ^Glint_App) {
 get_window :: proc(app: ^Glint_App) -> glfw.WindowHandle {
 	return app.window
 }
+
+get_framebuffer_size :: proc(app: ^Glint_App) -> (c.int, c.int) {
+	return app.dims.x, app.dims.y
+}
+
+get_time :: proc() -> f64 {
+  return glfw.GetTime()
+}
